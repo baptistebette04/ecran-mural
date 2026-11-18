@@ -144,6 +144,23 @@
   .night .n-date { font-size: 20px; font-weight: 600; color: #3E434B; margin-top: 18px; text-transform: capitalize; }
   .night .n-hint { position: absolute; bottom: 28px; font-size: 13px; font-weight: 600; color: #2E3238; }
 
+  /* Petit mot (bandeau en haut) */
+  .mot { position: fixed; top: 10px; left: 50%; -webkit-transform: translateX(-50%); transform: translateX(-50%); max-width: 80%; display: none; align-items: center; z-index: 6; border: 0; border-radius: 999px; padding: 10px 18px; background: var(--accent); color: #16181C; font-size: 17px; font-weight: 700; box-shadow: 0 6px 24px rgba(0,0,0,.4); }
+  .mot.show { display: flex; }
+  .mot .x { margin-left: 12px; opacity: .6; font-size: 15px; }
+  .mot .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Minuteur */
+  .timer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 7; }
+  .timer.show { display: flex; }
+  .timer .box { background: var(--card); border-radius: 32px; padding: 32px 56px; text-align: center; }
+  .timer .lbl { font-size: 17px; font-weight: 600; color: var(--muted); }
+  .timer .cnt { font-size: 140px; font-weight: 700; letter-spacing: -4px; line-height: 1.1; color: var(--text); }
+  .timer.done .cnt { color: var(--accent); font-size: 96px; letter-spacing: -2px; -webkit-animation: blink 1s infinite; animation: blink 1s infinite; }
+  .timer button { margin-top: 18px; height: 52px; padding: 0 36px; border: 0; border-radius: 16px; background: var(--inner); color: var(--text); font-size: 18px; font-weight: 700; }
+  @-webkit-keyframes blink { 50% { opacity: .35; } }
+  @keyframes blink { 50% { opacity: .35; } }
+
   /* Fenêtre de la clé */
   .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.75); display: none; align-items: center; justify-content: center; z-index: 10; }
   .overlay.show { display: flex; }
@@ -249,6 +266,18 @@
   <div class="n-time" id="n-time">--:--</div>
   <div class="n-date" id="n-date"></div>
   <div class="n-hint">Touche l'écran pour afficher le tableau de bord</div>
+</div>
+
+<!-- Petit mot envoyé par Siri (toucher = effacer) -->
+<button type="button" class="mot" id="mot" aria-label="Effacer le message"><span class="t" id="mot-t"></span><span class="x" aria-hidden="true">✕</span></button>
+
+<!-- Minuteur lancé par Siri -->
+<div class="timer" id="timer">
+  <div class="box">
+    <div class="lbl">Minuteur</div>
+    <div class="cnt" id="t-cnt">00:00</div>
+    <button type="button" id="t-stop">Arrêter</button>
+  </div>
 </div>
 
 <!-- Clé demandée une seule fois par appareil -->
@@ -481,6 +510,9 @@
       if (d.mode && d.mode !== mode) { mode = d.mode; peekUntil = 0; }
       applyMode();
       if (d.courses) setCoursesFromServer(d.courses);
+      if (d.now) serverOffset = d.now - Date.now();
+      minuteur = d.minuteur || null; mot = d.mot || null;
+      renderMot(); renderTimer();
       if (d.spotify) { sp = d.spotify; spAt = Date.now(); renderSpotify(); }
     }).catch(function () {});
   }
@@ -504,6 +536,40 @@
   loadSpotify();
   setInterval(loadSpotify, 5000); // état de la musique toutes les 5 s
   setInterval(tickBar, 1000);     // barre de progression fluide
+
+  /* ---------- Petit mot et minuteur (envoyés par Siri via le relais) ---------- */
+  var mot = null, minuteur = null, serverOffset = 0;
+
+  function renderMot() {
+    $('mot').className = mot && mot.text ? 'mot show' : 'mot';
+    $('mot-t').textContent = mot && mot.text ? mot.text : '';
+  }
+  $('mot').addEventListener('click', function () {
+    mot = null; renderMot();
+    relais('/mot/effacer').catch(function () {});
+  });
+
+  function two(n) { return (n < 10 ? '0' : '') + n; }
+  function renderTimer() {
+    var box = $('timer');
+    if (!minuteur) { box.className = 'timer'; return; }
+    var left = minuteur.end - (Date.now() + serverOffset);
+    if (left > 0) {
+      var s = Math.ceil(left / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+      $('t-cnt').textContent = (h ? h + ':' + two(m) : two(m)) + ':' + two(s % 60);
+      box.className = 'timer show';
+    } else if (left > -2 * 60 * 1000) { // affiché 2 minutes après la fin
+      $('t-cnt').textContent = 'Terminé !';
+      box.className = 'timer show done';
+    } else {
+      box.className = 'timer';
+    }
+  }
+  $('t-stop').addEventListener('click', function () {
+    minuteur = null; renderTimer();
+    relais('/minuteur/stop').catch(function () {});
+  });
+  setInterval(renderTimer, 1000);
 
   /* ---------- Courses (partagées via le relais : écran, iPhone, Siri) ---------- */
   var KEY = 'ecran-mural-courses';
