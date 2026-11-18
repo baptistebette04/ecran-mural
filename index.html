@@ -508,14 +508,14 @@
   /* ---------- État partagé : mode nuit/jour + musique (un seul appel toutes les 5 s) ---------- */
   // Jour = thème clair, nuit = écran noir avec l'heure (toucher = tableau de bord sombre 1 min).
   // Bascule automatique à heures fixes ; un ordre Siri garde la main jusqu'à la bascule suivante.
-  var JOUR_DEBUT = 7, JOUR_FIN = 21; // heures de la journée (modifiables)
+  var JOUR_DEBUT = 7, JOUR_FIN = 23; // heures de la journée (modifiables)
   var mode = 'jour', modeAt = 0, peekUntil = 0, lastEffective = '';
 
   function autoMode(d) {
     var h = d.getHours();
     return (h >= JOUR_DEBUT && h < JOUR_FIN) ? 'jour' : 'nuit';
   }
-  function lastSwitch(d) { // dernière bascule automatique (7 h ou 21 h) avant maintenant
+  function lastSwitch(d) { // dernière bascule automatique (7 h ou 23 h) avant maintenant
     var t = d.getTime(), best = 0;
     [-1, 0].forEach(function (off) {
       [JOUR_DEBUT, JOUR_FIN].forEach(function (h) {
