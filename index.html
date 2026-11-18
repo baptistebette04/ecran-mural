@@ -20,7 +20,21 @@
     --accent: #F5A524;
     --henallux: #4C8DFF;
     --famille: #F5A524;
+    --on-accent: #16181C;
   }
+  /* Thème clair (journée) */
+  body.clair {
+    --bg: #ECEEF1;
+    --card: #FFFFFF;
+    --inner: #F1F3F5;
+    --text: #16181C;
+    --muted: #5B616B;
+    --accent: #E8930C;
+    --henallux: #2F6FE4;
+    --famille: #E8930C;
+  }
+  body { -webkit-transition: background-color .8s; transition: background-color .8s; }
+  .card { -webkit-transition: background-color .8s; transition: background-color .8s; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
     margin: 0; height: 100%; overflow: hidden;
@@ -100,7 +114,7 @@
   }
   .add button {
     width: 44px; height: 44px; margin-left: 8px; border-radius: 14px; border: 0;
-    background: var(--accent); color: var(--bg);
+    background: var(--accent); color: var(--on-accent);
     display: flex; align-items: center; justify-content: center;
   }
   .add button svg { width: 20px; height: 20px; }
@@ -492,10 +506,32 @@
     $('s-bar').style.width = pct + '%';
   }
   /* ---------- État partagé : mode nuit/jour + musique (un seul appel toutes les 5 s) ---------- */
-  var mode = 'jour', peekUntil = 0;
+  // Jour = thème clair, nuit = écran noir avec l'heure (toucher = tableau de bord sombre 1 min).
+  // Bascule automatique à heures fixes ; un ordre Siri garde la main jusqu'à la bascule suivante.
+  var JOUR_DEBUT = 7, JOUR_FIN = 21; // heures de la journée (modifiables)
+  var mode = 'jour', modeAt = 0, peekUntil = 0, lastEffective = '';
 
+  function autoMode(d) {
+    var h = d.getHours();
+    return (h >= JOUR_DEBUT && h < JOUR_FIN) ? 'jour' : 'nuit';
+  }
+  function lastSwitch(d) { // dernière bascule automatique (7 h ou 21 h) avant maintenant
+    var t = d.getTime(), best = 0;
+    [-1, 0].forEach(function (off) {
+      [JOUR_DEBUT, JOUR_FIN].forEach(function (h) {
+        var b = new Date(d.getFullYear(), d.getMonth(), d.getDate() + off, h, 0, 0).getTime();
+        if (b <= t && b > best) best = b;
+      });
+    });
+    return best;
+  }
   function applyMode() {
-    var showNight = mode === 'nuit' && Date.now() > peekUntil;
+    var now = new Date();
+    var siriAt = modeAt ? modeAt - serverOffset : 0; // heure de l'ordre Siri, en heure de l'iPad
+    var effective = (siriAt && siriAt > lastSwitch(now)) ? mode : autoMode(now);
+    if (effective !== lastEffective) { lastEffective = effective; peekUntil = 0; }
+    document.body.className = effective === 'jour' ? 'clair' : '';
+    var showNight = effective === 'nuit' && Date.now() > peekUntil;
     $('night').className = showNight ? 'night show' : 'night';
   }
   $('night').addEventListener('click', function () {
@@ -507,10 +543,11 @@
   function loadSpotify() {
     if (!cle || spBusy) return;
     relais('/etat').then(function (d) {
-      if (d.mode && d.mode !== mode) { mode = d.mode; peekUntil = 0; }
+      if (d.now) serverOffset = d.now - Date.now();
+      if (d.mode) mode = d.mode;
+      modeAt = d.modeAt || 0;
       applyMode();
       if (d.courses) setCoursesFromServer(d.courses);
-      if (d.now) serverOffset = d.now - Date.now();
       minuteur = d.minuteur || null; mot = d.mot || null;
       renderMot(); renderTimer();
       if (d.spotify) { sp = d.spotify; spAt = Date.now(); renderSpotify(); }
@@ -645,6 +682,7 @@
   });
 
   render();
+  applyMode(); // thème correct dès l'ouverture, sans attendre le relais
 
   /* ---------- Rechargement complet chaque nuit à 4h (évite que la page "fige") ---------- */
   setInterval(function () {
