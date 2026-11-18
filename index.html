@@ -137,6 +137,13 @@
   .sp-ctrl button.main { width: 56px; height: 56px; background: var(--text); color: var(--card); }
   .sp-ctrl button:disabled { opacity: .35; }
 
+  /* Mode nuit */
+  .night { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 5; }
+  .night.show { display: flex; }
+  .night .n-time { font-size: 160px; font-weight: 700; letter-spacing: -5px; color: #5A5F68; line-height: 1; }
+  .night .n-date { font-size: 20px; font-weight: 600; color: #3E434B; margin-top: 18px; text-transform: capitalize; }
+  .night .n-hint { position: absolute; bottom: 28px; font-size: 13px; font-weight: 600; color: #2E3238; }
+
   /* Fenêtre de la clé */
   .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.75); display: none; align-items: center; justify-content: center; z-index: 10; }
   .overlay.show { display: flex; }
@@ -237,6 +244,13 @@
 
 </div>
 
+<!-- Mode nuit : juste l'heure, très sombre. Toucher l'écran = tableau de bord pendant 1 minute -->
+<div class="night" id="night">
+  <div class="n-time" id="n-time">--:--</div>
+  <div class="n-date" id="n-date"></div>
+  <div class="n-hint">Touche l'écran pour afficher le tableau de bord</div>
+</div>
+
 <!-- Clé demandée une seule fois par appareil -->
 <div class="overlay" id="k-box">
   <form id="k-form">
@@ -266,6 +280,8 @@
     $('time').textContent = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     $('date').textContent = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
     $('greeting').textContent = (h >= 5 && h < 18 ? 'Bonjour ' : 'Bonsoir ') + PRENOM;
+    $('n-time').textContent = $('time').textContent;
+    $('n-date').textContent = $('date').textContent;
   }
   updateClock();
   setInterval(updateClock, 10000);
@@ -446,10 +462,25 @@
     }
     $('s-bar').style.width = pct + '%';
   }
+  /* ---------- État partagé : mode nuit/jour + musique (un seul appel toutes les 5 s) ---------- */
+  var mode = 'jour', peekUntil = 0;
+
+  function applyMode() {
+    var showNight = mode === 'nuit' && Date.now() > peekUntil;
+    $('night').className = showNight ? 'night show' : 'night';
+  }
+  $('night').addEventListener('click', function () {
+    peekUntil = Date.now() + 60 * 1000; // tableau de bord visible 1 minute
+    applyMode();
+  });
+  setInterval(applyMode, 5000);
+
   function loadSpotify() {
     if (!cle || spBusy) return;
-    relais('/spotify/now').then(function (d) {
-      sp = d; spAt = Date.now(); renderSpotify();
+    relais('/etat').then(function (d) {
+      if (d.mode && d.mode !== mode) { mode = d.mode; peekUntil = 0; }
+      applyMode();
+      if (d.spotify) { sp = d.spotify; spAt = Date.now(); renderSpotify(); }
     }).catch(function () {});
   }
   function control(action) {
