@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Écran mural">
+<title>Écran mural</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Écrit pour Safari 12 (iPad Air, iOS 12) : pas de "gap" en flex, pas de ?. ni ?? en JS */
+  :root {
+    --bg: #0E1013;
+    --card: #1A1D22;
+    --inner: #24282F;
+    --text: #F3F4F6;
+    --muted: #A1A7B0;
+    --accent: #F5A524;
+    --henallux: #4C8DFF;
+    --famille: #F5A524;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    font-family: 'Manrope', -apple-system, system-ui, sans-serif;
+    -webkit-user-select: none; user-select: none;
+  }
+  button, input { font-family: inherit; }
+
+  .grid {
+    height: 100%;
+    padding: 18px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: 200px minmax(0, 1fr) minmax(0, 1fr);
+    grid-gap: 14px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 22px 26px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .label { font-size: 15px; font-weight: 600; color: var(--muted); }
+  .span2 { grid-column: span 2; }
+  .rows2 { grid-row: span 2; }
+
+  /* Heure */
+  .clock { justify-content: space-between; }
+  .clock .time { font-size: 96px; font-weight: 700; line-height: 1; letter-spacing: -3px; }
+  .clock .date { font-size: 18px; font-weight: 500; color: var(--muted); text-transform: capitalize; }
+
+  /* Météo */
+  .weather { flex-direction: row; align-items: stretch; }
+  .weather .main { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+  .weather .now { display: flex; align-items: center; }
+  .weather .now svg { width: 64px; height: 64px; margin-right: 16px; color: var(--accent); }
+  .weather .temp { font-size: 72px; font-weight: 700; line-height: 1; letter-spacing: -2px; }
+  .weather .desc { font-size: 16px; font-weight: 500; color: var(--muted); }
+  .hours { width: 230px; align-self: center; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-gap: 8px; margin-left: 24px; }
+  .hour { background: var(--inner); border-radius: 14px; padding: 12px 0; text-align: center; }
+  .hour .h { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+  .hour .t { font-size: 18px; font-weight: 700; }
+
+  /* Bloc "bientôt" */
+  .soon { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--muted); }
+  .soon svg { width: 34px; height: 34px; margin-bottom: 10px; }
+  .soon div { font-size: 15px; font-weight: 600; }
+  .badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--inner); color: var(--muted); }
+  .head { display: flex; justify-content: space-between; align-items: center; }
+
+  /* Courses */
+  .list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 12px 0; }
+  .item {
+    display: flex; align-items: center; width: 100%;
+    min-height: 44px; padding: 6px 4px;
+    background: transparent; border: 0; color: var(--text);
+    text-align: left; font-size: 17px; font-weight: 600;
+  }
+  .box {
+    width: 24px; height: 24px; border-radius: 8px; flex-shrink: 0;
+    border: 2px solid var(--muted); margin-right: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .item.done .box { background: var(--accent); border-color: var(--accent); }
+  .item.done .txt { text-decoration: line-through; opacity: .5; }
+  .box svg { width: 14px; height: 14px; display: none; }
+  .item.done .box svg { display: block; }
+  .del { margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 600; padding: 0 4px; }
+  .add { display: flex; }
+  .add input {
+    flex: 1; min-width: 0; height: 44px; border-radius: 14px; border: 0;
+    background: var(--inner); color: var(--text); padding: 0 14px; font-size: 16px;
+    -webkit-user-select: text; user-select: text; -webkit-appearance: none;
+  }
+  .add button {
+    width: 44px; height: 44px; margin-left: 8px; border-radius: 14px; border: 0;
+    background: var(--accent); color: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .add button svg { width: 20px; height: 20px; }
+  /* Agenda */
+  .legend { display: flex; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .legend span { display: flex; align-items: center; margin-left: 14px; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .agenda { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; margin-top: 16px; }
+  .ev { display: flex; align-items: center; background: var(--inner); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; }
+  .ev.past { opacity: .45; }
+  .ev .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-right: 16px; }
+  .ev .when { width: 104px; flex-shrink: 0; font-size: 15px; font-weight: 700; }
+  .ev .what { min-width: 0; }
+  .ev .title { font-size: 17px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ev .sub { font-size: 13px; font-weight: 500; color: var(--muted); margin-top: 2px; }
+  .ev.now { box-shadow: inset 0 0 0 2px var(--accent); }
+  .day { font-size: 15px; font-weight: 600; color: var(--muted); margin: 8px 0 10px; }
+  .empty { font-size: 16px; font-weight: 500; color: var(--muted); padding: 14px 4px; }
+
+  /* Spotify */
+  .sp-dev { font-size: 12px; font-weight: 600; color: var(--muted); max-width: 50%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sp-track { display: flex; align-items: center; margin-top: 12px; }
+  .sp-art { width: 64px; height: 64px; border-radius: 12px; background: var(--inner) center/cover no-repeat; flex-shrink: 0; margin-right: 12px; display: flex; align-items: center; justify-content: center; color: var(--muted); }
+  .sp-art svg { width: 28px; height: 28px; }
+  .sp-art.has-img svg { display: none; }
+  .sp-meta { min-width: 0; }
+  .sp-title { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sp-artist { font-size: 13px; font-weight: 500; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sp-bar { height: 4px; border-radius: 4px; background: var(--inner); margin-top: 12px; overflow: hidden; }
+  .sp-bar div { height: 4px; width: 0; background: var(--text); border-radius: 4px; }
+  .sp-ctrl { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+  .sp-ctrl button { width: 44px; height: 44px; border-radius: 50%; border: 0; background: transparent; color: var(--text); display: flex; align-items: center; justify-content: center; padding: 0; }
+  .sp-ctrl button svg { width: 22px; height: 22px; }
+  .sp-ctrl button.main { width: 56px; height: 56px; background: var(--text); color: var(--card); }
+  .sp-ctrl button:disabled { opacity: .35; }
+
+  /* Fenêtre de la clé */
+  .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.75); display: none; align-items: center; justify-content: center; z-index: 10; }
+  .overlay.show { display: flex; }
+  .overlay form { background: var(--card); border-radius: 24px; padding: 28px; width: 420px; }
+  .overlay h2 { margin: 0 0 6px; font-size: 22px; }
+  .overlay p { margin: 0 0 18px; color: var(--muted); font-size: 15px; }
+  .overlay input { width: 100%; height: 48px; border-radius: 14px; border: 0; background: var(--inner); color: var(--text); padding: 0 14px; font-size: 17px; -webkit-user-select: text; user-select: text; -webkit-appearance: none; }
+  .overlay button { width: 100%; height: 48px; margin-top: 12px; border-radius: 14px; border: 0; background: var(--accent); color: var(--bg); font-size: 17px; font-weight: 700; }
+
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<div class="grid">
+
+  <!-- Heure -->
+  <section class="card span2 clock">
+    <div class="label" id="greeting">Bonjour Baptiste</div>
+    <div class="time" id="time">--:--</div>
+    <div class="date" id="date"></div>
+  </section>
+
+  <!-- Météo -->
+  <section class="card span2 weather">
+    <div class="main">
+      <div class="label">Météo · Mettet</div>
+      <div class="now">
+        <span id="w-icon"></span>
+        <div class="temp" id="w-temp">--°</div>
+      </div>
+      <div class="desc" id="w-desc">Chargement…</div>
+    </div>
+    <div class="hours" id="w-hours"></div>
+  </section>
+
+  <!-- Agenda -->
+  <section class="card span2 rows2">
+    <div class="head">
+      <div class="label">Agenda · aujourd'hui</div>
+      <div class="legend">
+        <span><i style="background: var(--henallux)"></i>Henallux</span>
+        <span><i style="background: var(--famille)"></i>Famille</span>
+      </div>
+    </div>
+    <div class="agenda" id="a-list">
+      <div class="empty">Chargement…</div>
+    </div>
+  </section>
+
+  <!-- Courses -->
+  <section class="card rows2" style="padding: 22px 20px;">
+    <div class="label" id="c-title">Courses</div>
+    <div class="list" id="c-list"></div>
+    <form class="add" id="c-form">
+      <label for="c-input" class="visually-hidden">Ajouter un article</label>
+      <input id="c-input" type="text" placeholder="Ajouter…" autocomplete="off">
+      <button type="submit" aria-label="Ajouter l'article">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+      </button>
+    </form>
+  </section>
+
+  <!-- Spotify -->
+  <section class="card" style="padding: 20px;">
+    <div class="head"><div class="label">En lecture</div><div class="sp-dev" id="s-dev"></div></div>
+    <div class="sp-track">
+      <div class="sp-art" id="s-art">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+      </div>
+      <div class="sp-meta">
+        <div class="sp-title" id="s-title">Rien en lecture</div>
+        <div class="sp-artist" id="s-artist">Lance Spotify sur un appareil</div>
+      </div>
+    </div>
+    <div class="sp-bar"><div id="s-bar"></div></div>
+    <div class="sp-ctrl">
+      <button type="button" id="s-prev" aria-label="Morceau précédent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 20 9 12l10-8v16Z"></path><path d="M5 19V5"></path></svg>
+      </button>
+      <button type="button" id="s-play" class="main" aria-label="Lecture">
+        <svg id="s-ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8Z"></path></svg>
+        <svg id="s-ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:none"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>
+      </button>
+      <button type="button" id="s-next" aria-label="Morceau suivant">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 4 10 8-10 8V4Z"></path><path d="M19 5v14"></path></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- Lampe (phase 2) -->
+  <section class="card" style="padding: 20px;">
+    <div class="head"><div class="label">Lampe</div><div class="badge">PHASE 2</div></div>
+    <div class="soon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path></svg>
+      <div>Plus tard</div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Clé demandée une seule fois par appareil -->
+<div class="overlay" id="k-box">
+  <form id="k-form">
+    <h2>Clé de l'écran mural</h2>
+    <p>Tape la clé « CLE » que tu as créée dans Cloudflare. Elle sera retenue sur cet appareil.</p>
+    <label for="k-input" class="visually-hidden">Clé</label>
+    <input id="k-input" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <button type="submit">Valider</button>
+  </form>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Réglages ---------- */
+  var PRENOM = 'Baptiste';
+  var LAT = 50.32, LON = 4.66; // Mettet
+  var METEO_REFRESH_MIN = 15;
+
+  function $(id) { return document.getElementById(id); }
+
+  /* ---------- Heure ---------- */
+  function updateClock() {
+    var now = new Date();
+    var h = now.getHours();
+    $('time').textContent = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    $('date').textContent = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    $('greeting').textContent = (h >= 5 && h < 18 ? 'Bonjour ' : 'Bonsoir ') + PRENOM;
+  }
+  updateClock();
+  setInterval(updateClock, 10000);
+
+  /* ---------- Météo (Open-Meteo, gratuit, sans clé) ---------- */
+  var ICONS = {
+    sun: '<path d="M12 4V2M12 22v-2M4.93 4.93 6.34 6.34M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path><circle cx="12" cy="12" r="4"></circle>',
+    cloudsun: '<path d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41M15.95 12.65a4 4 0 0 0-5.93-4.28"></path><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"></path>',
+    cloud: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>',
+    fog: '<path d="M4 14.9A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.24"></path><path d="M16 17H7M17 21H9"></path>',
+    rain: '<path d="M4 14.9A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.24"></path><path d="M16 14v6M8 14v6M12 16v6"></path>',
+    snow: '<path d="M4 14.9A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.24"></path><path d="M8 15h.01M8 19h.01M12 17h.01M12 21h.01M16 15h.01M16 19h.01"></path>',
+    storm: '<path d="M6 16.33A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 .5 8.97"></path><path d="m13 12-3 5h4l-3 5"></path>'
+  };
+  function codeInfo(c) {
+    if (c === 0) return ['Ciel dégagé', 'sun'];
+    if (c === 1) return ['Plutôt dégagé', 'sun'];
+    if (c === 2) return ['Éclaircies', 'cloudsun'];
+    if (c === 3) return ['Couvert', 'cloud'];
+    if (c === 45 || c === 48) return ['Brouillard', 'fog'];
+    if (c >= 51 && c <= 57) return ['Bruine', 'rain'];
+    if ((c >= 61 && c <= 67) || (c >= 80 && c <= 82)) return ['Pluie', 'rain'];
+    if ((c >= 71 && c <= 77) || c === 85 || c === 86) return ['Neige', 'snow'];
+    if (c >= 95) return ['Orage', 'storm'];
+    return ['—', 'cloud'];
+  }
+  function svg(name) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[name] + '</svg>';
+  }
+
+  function loadWeather() {
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + LAT + '&longitude=' + LON +
+      '&current=temperature_2m,weather_code' +
+      '&hourly=temperature_2m' +
+      '&daily=temperature_2m_max,temperature_2m_min' +
+      '&timezone=Europe%2FBrussels&forecast_days=2';
+    fetch(url).then(function (r) { return r.json(); }).then(function (d) {
+      var info = codeInfo(d.current.weather_code);
+      $('w-icon').innerHTML = svg(info[1]);
+      $('w-temp').textContent = Math.round(d.current.temperature_2m) + '°';
+      $('w-desc').textContent = info[0] + ' · min ' + Math.round(d.daily.temperature_2m_min[0]) +
+        '° / max ' + Math.round(d.daily.temperature_2m_max[0]) + '°';
+
+      // 4 prochaines heures
+      var times = d.hourly.time, temps = d.hourly.temperature_2m;
+      var nowIso = d.current.time.slice(0, 13); // "AAAA-MM-JJTHH"
+      var start = 0;
+      for (var i = 0; i < times.length; i++) { if (times[i].slice(0, 13) === nowIso) { start = i + 1; break; } }
+      var html = '';
+      for (var k = start; k < start + 4 && k < times.length; k++) {
+        html += '<div class="hour"><div class="h">' + times[k].slice(11, 13) + 'h</div><div class="t">' + Math.round(temps[k]) + '°</div></div>';
+      }
+      $('w-hours').innerHTML = html;
+    }).catch(function () {
+      $('w-desc').textContent = 'Météo indisponible pour le moment';
+    });
+  }
+  loadWeather();
+  setInterval(loadWeather, METEO_REFRESH_MIN * 60 * 1000);
+
+  /* ---------- Clé du relais (retenue sur l'appareil, jamais dans le code) ---------- */
+  var RELAIS = 'https://ecran-mural-agenda.baptistebette04.workers.dev';
+  var KEY_STORE = 'ecran-mural-cle';
+  var cle = '';
+  try { cle = localStorage.getItem(KEY_STORE) || ''; } catch (e) {}
+
+  function askKey() { $('k-box').className = 'overlay show'; }
+  function relais(path, opts) {
+    var sep = path.indexOf('?') < 0 ? '?' : '&';
+    return fetch(RELAIS + path + sep + 'k=' + encodeURIComponent(cle) + '&t=' + Date.now(), opts || {})
+      .then(function (r) {
+        if (r.status === 401) { askKey(); throw new Error('cle'); }
+        return r.json();
+      });
+  }
+  $('k-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var v = $('k-input').value.trim();
+    if (!v) return;
+    cle = v;
+    try { localStorage.setItem(KEY_STORE, v); } catch (e) {}
+    $('k-input').value = '';
+    $('k-input').blur();
+    $('k-box').className = 'overlay';
+    loadAgenda(); loadSpotify();
+  });
+  if (!cle) askKey();
+
+  /* ---------- Agenda (via le relais Cloudflare) ---------- */
+  var COLORS = { henallux: 'var(--henallux)', famille: 'var(--famille)' };
+  var NAMES = { henallux: 'Henallux', famille: 'Famille' };
+  var agenda = null;
+
+  function toMin(s) { return s ? (+s.slice(0, 2)) * 60 + (+s.slice(3, 5)) : null; }
+
+  function evRow(e, isToday, nowMin) {
+    var row = document.createElement('div');
+    var startM = toMin(e.start), endM = toMin(e.end);
+    var cls = 'ev';
+    if (isToday && !e.allDay) {
+      var finish = endM !== null && endM > startM ? endM : startM + 60;
+      if (finish <= nowMin) cls += ' past';
+      else if (startM <= nowMin) cls += ' now';
+    }
+    row.className = cls;
+    row.innerHTML = '<span class="dot"></span><div class="when"></div><div class="what"><div class="title"></div><div class="sub"></div></div>';
+    row.querySelector('.dot').style.background = COLORS[e.cal] || 'var(--muted)';
+    row.querySelector('.when').textContent = e.allDay ? 'Journée' : (e.end ? e.start + '–' + e.end : e.start);
+    row.querySelector('.title').textContent = e.title;
+    row.querySelector('.sub').textContent = e.location ? e.location : (NAMES[e.cal] || '');
+    return row;
+  }
+
+  function renderAgenda() {
+    var box = $('a-list');
+    if (!agenda) return;
+    box.innerHTML = '';
+    var n = new Date(), nowMin = n.getHours() * 60 + n.getMinutes();
+
+    if (agenda.error) {
+      box.innerHTML = '<div class="empty">Agenda indisponible pour le moment</div>';
+      return;
+    }
+    if (!agenda.today.length) {
+      box.innerHTML = '<div class="empty">Rien de prévu aujourd\'hui</div>';
+    } else {
+      agenda.today.forEach(function (e) { box.appendChild(evRow(e, true, nowMin)); });
+    }
+    var d = document.createElement('div');
+    d.className = 'day';
+    d.textContent = 'Demain';
+    box.appendChild(d);
+    if (!agenda.tomorrow.length) {
+      var em = document.createElement('div');
+      em.className = 'empty';
+      em.textContent = 'Rien de prévu';
+      box.appendChild(em);
+    } else {
+      agenda.tomorrow.forEach(function (e) { box.appendChild(evRow(e, false, nowMin)); });
+    }
+  }
+
+  function loadAgenda() {
+    if (!cle) return;
+    relais('/').then(function (d) {
+      agenda = d; renderAgenda();
+    }).catch(function () {
+      if (!agenda) { agenda = { error: true }; renderAgenda(); }
+    });
+  }
+  loadAgenda();
+  setInterval(loadAgenda, 10 * 60 * 1000); // nouvelles données toutes les 10 min
+  setInterval(renderAgenda, 60 * 1000);    // grise les événements passés chaque minute
+
+  /* ---------- Spotify (via le relais) ---------- */
+  var sp = null, spAt = 0, spBusy = false;
+
+  function renderSpotify() {
+    var on = sp && sp.active && sp.title;
+    $('s-title').textContent = on ? sp.title : 'Rien en lecture';
+    $('s-artist').textContent = on ? sp.artist : (sp && sp.error === 'cle' ? '' : 'Lance Spotify sur un appareil');
+    $('s-dev').textContent = on && sp.device ? sp.device : '';
+    var art = $('s-art');
+    if (on && sp.art) { art.style.backgroundImage = 'url("' + sp.art + '")'; art.className = 'sp-art has-img'; }
+    else { art.style.backgroundImage = ''; art.className = 'sp-art'; }
+    var playing = !!(on && sp.playing);
+    $('s-ico-play').style.display = playing ? 'none' : 'block';
+    $('s-ico-pause').style.display = playing ? 'block' : 'none';
+    $('s-play').setAttribute('aria-label', playing ? 'Pause' : 'Lecture');
+    $('s-prev').disabled = $('s-next').disabled = $('s-play').disabled = !on;
+    tickBar();
+  }
+  function tickBar() {
+    var pct = 0;
+    if (sp && sp.active && sp.duration) {
+      var pos = sp.progress + (sp.playing ? Date.now() - spAt : 0);
+      pct = Math.min(100, (pos / sp.duration) * 100);
+    }
+    $('s-bar').style.width = pct + '%';
+  }
+  function loadSpotify() {
+    if (!cle || spBusy) return;
+    relais('/spotify/now').then(function (d) {
+      sp = d; spAt = Date.now(); renderSpotify();
+    }).catch(function () {});
+  }
+  function control(action) {
+    if (spBusy) return;
+    spBusy = true;
+    if (action === 'play' || action === 'pause') { // réaction immédiate à l'écran
+      sp.progress = sp.progress + (sp.playing ? Date.now() - spAt : 0); spAt = Date.now();
+      sp.playing = action === 'play'; renderSpotify();
+    }
+    relais('/spotify/' + action, { method: 'POST' }).then(function () {}, function () {}).then(function () {
+      spBusy = false;
+      setTimeout(loadSpotify, 700);
+    });
+  }
+  $('s-play').addEventListener('click', function () { if (sp && sp.active) control(sp.playing ? 'pause' : 'play'); });
+  $('s-next').addEventListener('click', function () { control('next'); });
+  $('s-prev').addEventListener('click', function () { control('previous'); });
+
+  renderSpotify();
+  loadSpotify();
+  setInterval(loadSpotify, 5000); // état de la musique toutes les 5 s
+  setInterval(tickBar, 1000);     // barre de progression fluide
+
+  /* ---------- Courses (gardées dans la mémoire de l'iPad) ---------- */
+  var KEY = 'ecran-mural-courses';
+  var items = [];
+  try { items = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { items = []; }
+
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) {} }
+
+  function render() {
+    var list = $('c-list');
+    list.innerHTML = '';
+    var left = 0;
+    items.forEach(function (it, i) {
+      if (!it.done) left++;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'item' + (it.done ? ' done' : '');
+      b.innerHTML = '<span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="#0E1013" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><span class="txt"></span>';
+      b.querySelector('.txt').textContent = it.label;
+      if (it.done) {
+        var del = document.createElement('span');
+        del.className = 'del';
+        del.textContent = 'Retirer';
+        del.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          items.splice(i, 1); save(); render();
+        });
+        b.appendChild(del);
+      }
+      b.addEventListener('click', function () { it.done = !it.done; save(); render(); });
+      list.appendChild(b);
+    });
+    $('c-title').textContent = items.length ? 'Courses · ' + left + ' à prendre' : 'Courses';
+  }
+
+  $('c-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var input = $('c-input');
+    var v = input.value.trim();
+    if (!v) return;
+    items.push({ label: v, done: false });
+    input.value = '';
+    input.blur();
+    save(); render();
+  });
+
+  render();
+
+  /* ---------- Rechargement complet chaque nuit à 4h (évite que la page "fige") ---------- */
+  setInterval(function () {
+    var n = new Date();
+    if (n.getHours() === 4 && n.getMinutes() === 0) location.reload();
+  }, 60000);
+})();
+</script>
+</body>
+</html>
