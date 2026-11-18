@@ -480,6 +480,7 @@
     relais('/etat').then(function (d) {
       if (d.mode && d.mode !== mode) { mode = d.mode; peekUntil = 0; }
       applyMode();
+      if (d.courses) setCoursesFromServer(d.courses);
       if (d.spotify) { sp = d.spotify; spAt = Date.now(); renderSpotify(); }
     }).catch(function () {});
   }
@@ -504,12 +505,35 @@
   setInterval(loadSpotify, 5000); // état de la musique toutes les 5 s
   setInterval(tickBar, 1000);     // barre de progression fluide
 
-  /* ---------- Courses (gardées dans la mémoire de l'iPad) ---------- */
+  /* ---------- Courses (partagées via le relais : écran, iPhone, Siri) ---------- */
   var KEY = 'ecran-mural-courses';
-  var items = [];
-  try { items = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { items = []; }
+  var items = [], migrated = false, coursesBusy = 0;
+  var oldItems = [];
+  try { oldItems = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) {}
 
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) {} }
+  // Reçoit la liste depuis /etat (toutes les 5 s)
+  function setCoursesFromServer(list) {
+    if (coursesBusy) return; // une action est en cours : on garde l'affichage local
+    // Première fois : on transfère l'ancienne liste gardée sur l'iPad
+    if (!migrated) {
+      migrated = true;
+      var reste = oldItems.filter(function (x) { return !x.done; }).map(function (x) { return x.label; });
+      if (!list.length && reste.length) {
+        coursesCall('/courses/add?t=' + encodeURIComponent(reste.join(', ')));
+        try { localStorage.removeItem(KEY); } catch (e) {}
+        return;
+      }
+      try { localStorage.removeItem(KEY); } catch (e) {}
+    }
+    items = list; render();
+  }
+  function coursesCall(path) {
+    coursesBusy++;
+    relais(path).then(function (d) {
+      coursesBusy--;
+      if (d && d.courses) { items = d.courses; render(); }
+    }, function () { coursesBusy--; });
+  }
 
   function render() {
     var list = $('c-list');
@@ -528,11 +552,15 @@
         del.textContent = 'Retirer';
         del.addEventListener('click', function (ev) {
           ev.stopPropagation();
-          items.splice(i, 1); save(); render();
+          items.splice(i, 1); render();
+          coursesCall('/courses/del?id=' + encodeURIComponent(it.id));
         });
         b.appendChild(del);
       }
-      b.addEventListener('click', function () { it.done = !it.done; save(); render(); });
+      b.addEventListener('click', function () {
+        it.done = !it.done; render();
+        coursesCall('/courses/toggle?id=' + encodeURIComponent(it.id));
+      });
       list.appendChild(b);
     });
     $('c-title').textContent = items.length ? 'Courses · ' + left + ' à prendre' : 'Courses';
@@ -543,10 +571,11 @@
     var input = $('c-input');
     var v = input.value.trim();
     if (!v) return;
-    items.push({ label: v, done: false });
+    items.push({ id: 'tmp', label: v, done: false });
     input.value = '';
     input.blur();
-    save(); render();
+    render();
+    coursesCall('/courses/add?t=' + encodeURIComponent(v));
   });
 
   render();
