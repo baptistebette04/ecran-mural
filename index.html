@@ -158,11 +158,12 @@
   .night .n-date { font-size: 20px; font-weight: 600; color: #3E434B; margin-top: 18px; text-transform: capitalize; }
   .night .n-hint { position: absolute; bottom: 28px; font-size: 13px; font-weight: 600; color: #2E3238; }
 
-  /* Petit mot (bandeau en haut) */
-  .mot { position: fixed; top: 10px; left: 50%; -webkit-transform: translateX(-50%); transform: translateX(-50%); max-width: 80%; display: none; align-items: center; z-index: 6; border: 0; border-radius: 999px; padding: 10px 18px; background: var(--accent); color: #16181C; font-size: 17px; font-weight: 700; box-shadow: 0 6px 24px rgba(0,0,0,.4); }
-  .mot.show { display: flex; }
-  .mot .x { margin-left: 12px; opacity: .6; font-size: 15px; }
-  .mot .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Petit mot (grande carte en haut) */
+  .mot { position: fixed; top: 18px; left: 50%; -webkit-transform: translateX(-50%); transform: translateX(-50%); width: 76%; display: none; z-index: 6; border: 0; border-radius: 22px; padding: 20px 56px 22px 28px; background: var(--accent); color: #16181C; text-align: left; font-family: inherit; box-shadow: 0 10px 40px rgba(0,0,0,.45); }
+  .mot.show { display: block; }
+  .mot .de { display: block; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; opacity: .7; margin-bottom: 6px; }
+  .mot .t { display: block; font-size: 34px; line-height: 1.2; font-weight: 800; overflow: hidden; max-height: 3.6em; }
+  .mot .x { position: absolute; top: 16px; right: 20px; opacity: .55; font-size: 22px; }
 
   /* Minuteur */
   .timer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 7; }
@@ -283,7 +284,7 @@
 </div>
 
 <!-- Petit mot envoyé par Siri (toucher = effacer) -->
-<button type="button" class="mot" id="mot" aria-label="Effacer le message"><span class="t" id="mot-t"></span><span class="x" aria-hidden="true">✕</span></button>
+<button type="button" class="mot" id="mot" aria-label="Effacer le message"><span class="de" id="mot-de"></span><span class="t" id="mot-t"></span><span class="x" aria-hidden="true">✕</span></button>
 
 <!-- Minuteur lancé par Siri -->
 <div class="timer" id="timer">
@@ -580,7 +581,38 @@
   function renderMot() {
     $('mot').className = mot && mot.text ? 'mot show' : 'mot';
     $('mot-t').textContent = mot && mot.text ? mot.text : '';
+    $('mot-de').textContent = mot && mot.text ? (mot.de ? 'Message de ' + mot.de : 'Message') : '';
+    if (mot && mot.text) lireMot(mot);
   }
+
+  /* Lecture à voix haute des nouveaux messages (voix de l'iPad) */
+  var LU_KEY = 'ecran-mural-mot-lu', dejaLu = 0;
+  try { dejaLu = +localStorage.getItem(LU_KEY) || 0; } catch (e) {}
+  var synth = window.speechSynthesis;
+  function dire(t, volume) {
+    if (!synth || !window.SpeechSynthesisUtterance) return;
+    var u = new SpeechSynthesisUtterance(t);
+    u.lang = 'fr-FR'; u.rate = 0.95;
+    if (volume !== undefined) u.volume = volume;
+    var vs = synth.getVoices ? synth.getVoices() : [];
+    for (var i = 0; i < vs.length; i++) { if (/^fr/i.test(vs[i].lang)) { u.voice = vs[i]; break; } }
+    synth.speak(u);
+  }
+  function lireMot(m) {
+    if (!m.at || m.at === dejaLu) return;
+    var age = Date.now() + serverOffset - m.at;
+    dejaLu = m.at;
+    try { localStorage.setItem(LU_KEY, String(m.at)); } catch (e) {}
+    if (age > 10 * 60 * 1000) return; // message ancien : on ne le relit pas
+    dire((m.de ? 'Message de ' + m.de + '. ' : 'Nouveau message. ') + m.text);
+  }
+  // iOS n'autorise le son qu'après un premier toucher : on « débloque » la voix au premier contact
+  var voixDebloquee = false;
+  document.addEventListener('touchend', function () {
+    if (voixDebloquee) return;
+    voixDebloquee = true;
+    dire(' ', 0);
+  }, false);
   $('mot').addEventListener('click', function () {
     mot = null; renderMot();
     relais('/mot/effacer').catch(function () {});
@@ -622,7 +654,7 @@
       migrated = true;
       var reste = oldItems.filter(function (x) { return !x.done; }).map(function (x) { return x.label; });
       if (!list.length && reste.length) {
-        coursesCall('/courses/add?t=' + encodeURIComponent(reste.join(', ')));
+        coursesCall('/courses/add?silence=1&t=' + encodeURIComponent(reste.join(', ')));
         try { localStorage.removeItem(KEY); } catch (e) {}
         return;
       }
