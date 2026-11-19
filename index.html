@@ -121,7 +121,7 @@
   /* Agenda */
   .legend { display: flex; }
   .legend button {
-    display: flex; align-items: center; height: 30px; padding: 0 12px; margin-left: 6px;
+    display: flex; align-items: center; height: 30px; padding: 0 10px; margin-left: 4px;
     border: 0; border-radius: 999px; background: transparent; color: var(--muted);
     font-size: 13px; font-weight: 700; font-family: inherit;
   }
@@ -257,7 +257,7 @@
   <!-- Agenda -->
   <section class="card span2 rows2 ecran-seul">
     <div class="head">
-      <div class="label">Agenda · aujourd'hui</div>
+      <div class="label">Agenda</div>
       <div class="legend" id="a-filtre" aria-label="Calendriers affichés"></div>
     </div>
     <div class="agenda" id="a-list">
@@ -557,8 +557,8 @@
   });
 
   /* ---------- Agenda (via le relais Cloudflare) ---------- */
-  var COLORS = { henallux: 'var(--henallux)', famille: 'var(--famille)' };
-  var NAMES = { henallux: 'Henallux', famille: 'Famille' };
+  var COLORS = { henallux: 'var(--henallux)', famille: 'var(--famille)', poubelles: '#2BA84A' };
+  var NAMES = { henallux: 'Henallux', famille: 'Famille', poubelles: 'Poubelles' };
 
   // Filtre des calendriers : « Tout » ou un seul calendrier (choix retenu sur l'appareil)
   var FILTRE_KEY = 'ecran-mural-filtre', filtre = 'tout';
@@ -899,7 +899,7 @@
   applyMode(); // thème correct dès l'ouverture, sans attendre le relais
 
   /* ---------- Mise à jour automatique : toutes les 5 min, on regarde si une nouvelle version est en ligne ---------- */
-  var VERSION = '2026-11-20a';
+  var VERSION = '2026-11-20b';
   function verifierVersion() {
     var a = document.activeElement;
     if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return; // on ne coupe pas quelqu'un qui écrit
