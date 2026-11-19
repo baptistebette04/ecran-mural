@@ -186,17 +186,25 @@
   .overlay button { width: 100%; height: 48px; margin-top: 12px; border-radius: 14px; border: 0; background: var(--accent); color: var(--bg); font-size: 17px; font-weight: 700; }
 
   /* Bloc « Petit mot » (envoyer un message) */
-  .msg-form { display: flex; flex-direction: column; margin-top: 12px; flex: 1; min-height: 0; }
+  .msg-form { display: flex; flex-direction: column; margin-top: 4px; flex: 1; min-height: 0; }
   .msg-form textarea {
-    flex: 1; min-height: 44px; resize: none; border: 0; border-radius: 14px;
+    flex: 1; min-height: 38px; resize: none; border: 0; border-radius: 14px;
     background: var(--inner); color: var(--text); padding: 10px 14px; font-size: 16px; font-family: inherit;
     -webkit-user-select: text; user-select: text; -webkit-appearance: none;
   }
   .msg-form button {
-    height: 44px; margin-top: 8px; border: 0; border-radius: 14px;
+    height: 44px; flex-shrink: 0; margin-top: 8px; border: 0; border-radius: 14px;
     background: var(--accent); color: var(--on-accent); font-size: 16px; font-weight: 700;
   }
-  .msg-etat { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 6px; min-height: 18px; }
+  .dest { display: flex; flex-wrap: wrap; margin: 10px 0 2px; }
+  .dest button {
+    height: 28px; padding: 0 9px; margin: 0 5px 5px 0; border-radius: 999px;
+    border: 2px solid var(--inner); background: var(--inner); color: var(--text);
+    font-size: 13px; font-weight: 700; font-family: inherit;
+  }
+  .dest button.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  body.tel .dest button { height: 36px; padding: 0 14px; font-size: 15px; }
+  .msg-etat { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 4px; min-height: 16px; flex-shrink: 0; }
 
   /* Version téléphone (ouverte depuis une notification) : courses en haut, message en dessous */
   body.tel { overflow: auto; height: auto; }
@@ -298,6 +306,7 @@
   <!-- Petit mot : envoyer un message (affiché sur l'écran + notification à la famille) -->
   <section class="card" style="padding: 20px;">
     <div class="label">Petit mot</div>
+    <div class="dest" id="m-dest" aria-label="Destinataires"></div>
     <form class="msg-form" id="m-form">
       <label for="m-input" class="visually-hidden">Message</label>
       <textarea id="m-input" maxlength="140" placeholder="Écrire un message…"></textarea>
@@ -368,7 +377,34 @@
   var NOMS = { 'baptiste': 'Baptiste', 'laurence': 'Laurence', 'pierre-yves': 'Pierre-Yves', 'matthieu': 'Matthieu' };
   var MOI_KEY = 'ecran-mural-moi', moi = '';
   try { moi = localStorage.getItem(MOI_KEY) || ''; } catch (e) {}
-  function majMoi() { $('tel-titre').textContent = moi && NOMS[moi] ? 'Bonjour ' + NOMS[moi] : 'Maison'; }
+  function majMoi() {
+    $('tel-titre').textContent = moi && NOMS[moi] ? 'Bonjour ' + NOMS[moi] : 'Maison';
+    dest = []; majDest();
+  }
+
+  /* ---------- Destinataires du petit mot (Tous par défaut, sinon un ou plusieurs prénoms) ---------- */
+  var dest = [];
+  function majDest() {
+    var box = $('m-dest');
+    box.innerHTML = '';
+    var choix = [['', 'Tous']];
+    for (var k in NOMS) { if (!(TEL && k === moi)) choix.push([k, NOMS[k]]); }
+    choix.forEach(function (c) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = c[1];
+      var actif = c[0] ? dest.indexOf(c[0]) >= 0 : !dest.length;
+      b.className = actif ? 'on' : '';
+      b.setAttribute('aria-pressed', actif ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        if (!c[0]) dest = [];
+        else if (dest.indexOf(c[0]) >= 0) dest.splice(dest.indexOf(c[0]), 1);
+        else dest.push(c[0]);
+        majDest();
+      });
+      box.appendChild(b);
+    });
+  }
   if (TEL) {
     document.documentElement.style.overflow = 'auto';
     document.documentElement.style.height = 'auto';
@@ -385,6 +421,7 @@
     if (!moi) $('moi-box').className = 'overlay show';
     majMoi();
   }
+  majDest();
   // Qui signe : le téléphone envoie son prénom ; l'écran mural ajoute au nom de Laurence
   function signature() { return TEL ? (moi ? '&de=' + encodeURIComponent(moi) : '') : '&de=laurence&ecran=1'; }
 
@@ -491,11 +528,12 @@
     var v = $('m-input').value.trim();
     if (!v) return;
     $('m-etat').textContent = 'Envoi…';
-    fetch(RELAIS + '/mot?t=' + encodeURIComponent(v) + signature() + '&k=' + encodeURIComponent(cle) + '&n=' + Date.now())
+    fetch(RELAIS + '/mot?t=' + encodeURIComponent(v) + signature() + (dest.length ? '&pour=' + encodeURIComponent(dest.join(',')) : '') + '&k=' + encodeURIComponent(cle) + '&n=' + Date.now())
       .then(function (r) {
         if (r.status === 401) { askKey(); throw new Error('cle'); }
         if (!r.ok) throw new Error('erreur');
         $('m-input').value = ''; $('m-input').blur();
+        dest = []; majDest();
         $('m-etat').textContent = 'Envoyé ✓';
         setTimeout(function () { $('m-etat').textContent = ''; }, 4000);
         loadSpotify();
@@ -672,7 +710,7 @@
     if (TEL) return; // sur le téléphone, pas de bandeau ni de lecture à voix haute
     $('mot').className = mot && mot.text ? 'mot show' : 'mot';
     $('mot-t').textContent = mot && mot.text ? mot.text : '';
-    $('mot-de').textContent = mot && mot.text ? (mot.de ? 'Message de ' + mot.de : 'Message') : '';
+    $('mot-de').textContent = mot && mot.text ? (mot.de ? 'Message de ' + mot.de : 'Message') + pourTexte(mot, ' · pour ') : '';
     if (mot && mot.text) lireMot(mot);
   }
 
@@ -689,6 +727,11 @@
     for (var i = 0; i < vs.length; i++) { if (/^fr/i.test(vs[i].lang)) { u.voice = vs[i]; break; } }
     synth.speak(u);
   }
+  function pourTexte(m, sep) {
+    var p = m.pour || [];
+    if (!p.length) return '';
+    return sep + (p.length < 2 ? p[0] : p.slice(0, -1).join(', ') + ' et ' + p[p.length - 1]);
+  }
   function lireMot(m) {
     if (!m.at || m.at === dejaLu) return;
     var age = Date.now() + serverOffset - m.at;
@@ -696,7 +739,7 @@
     try { localStorage.setItem(LU_KEY, String(m.at)); } catch (e) {}
     if (age > 10 * 60 * 1000) return; // message ancien : on ne le relit pas
     if (m.ecran) return;               // écrit sur l'écran mural lui-même : pas de lecture à voix haute
-    dire((m.de ? 'Message de ' + m.de + '. ' : 'Nouveau message. ') + m.text);
+    dire((m.de ? 'Message de ' + m.de : 'Nouveau message') + pourTexte(m, ' pour ') + '. ' + m.text);
   }
   // iOS n'autorise le son qu'après un premier toucher : on « débloque » la voix au premier contact
   var voixDebloquee = false;
