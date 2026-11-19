@@ -695,6 +695,7 @@
     dejaLu = m.at;
     try { localStorage.setItem(LU_KEY, String(m.at)); } catch (e) {}
     if (age > 10 * 60 * 1000) return; // message ancien : on ne le relit pas
+    if (m.ecran) return;               // écrit sur l'écran mural lui-même : pas de lecture à voix haute
     dire((m.de ? 'Message de ' + m.de + '. ' : 'Nouveau message. ') + m.text);
   }
   // iOS n'autorise le son qu'après un premier toucher : on « débloque » la voix au premier contact
