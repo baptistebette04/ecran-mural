@@ -185,21 +185,51 @@
   .overlay input { width: 100%; height: 48px; border-radius: 14px; border: 0; background: var(--inner); color: var(--text); padding: 0 14px; font-size: 17px; -webkit-user-select: text; user-select: text; -webkit-appearance: none; }
   .overlay button { width: 100%; height: 48px; margin-top: 12px; border-radius: 14px; border: 0; background: var(--accent); color: var(--bg); font-size: 17px; font-weight: 700; }
 
+  /* Bloc « Petit mot » (envoyer un message) */
+  .msg-form { display: flex; flex-direction: column; margin-top: 12px; flex: 1; min-height: 0; }
+  .msg-form textarea {
+    flex: 1; min-height: 44px; resize: none; border: 0; border-radius: 14px;
+    background: var(--inner); color: var(--text); padding: 10px 14px; font-size: 16px; font-family: inherit;
+    -webkit-user-select: text; user-select: text; -webkit-appearance: none;
+  }
+  .msg-form button {
+    height: 44px; margin-top: 8px; border: 0; border-radius: 14px;
+    background: var(--accent); color: var(--on-accent); font-size: 16px; font-weight: 700;
+  }
+  .msg-etat { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 6px; min-height: 18px; }
+
+  /* Version téléphone (ouverte depuis une notification) : courses en haut, message en dessous */
+  body.tel { overflow: auto; height: auto; }
+  body.tel .grid { display: block; height: auto; padding: 16px 14px 40px; padding-top: calc(16px + env(safe-area-inset-top)); max-width: 560px; margin: 0 auto; }
+  body.tel .card.courses { min-height: 0; }
+  body.tel .card { margin-bottom: 14px; }
+  body.tel .ecran-seul { display: none; }
+  body.tel .card.courses .list { overflow: visible; }
+  body.tel .item { font-size: 19px; min-height: 50px; }
+  body.tel .msg-form textarea { min-height: 90px; flex: none; }
+  .tel-haut { display: none; }
+  body.tel .tel-haut { display: flex; justify-content: space-between; align-items: center; margin: 4px 4px 14px; }
+  .tel-haut h1 { margin: 0; font-size: 24px; font-weight: 800; }
+  .tel-haut button { border: 0; background: transparent; color: var(--muted); font-size: 14px; font-weight: 600; padding: 6px 0; }
+  .moi-choix { display: grid; grid-template-columns: 1fr 1fr; grid-gap: 10px; margin-top: 6px; }
+  .moi-choix button { margin-top: 0; }
+
   .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>
 </head>
 <body>
 <div class="grid">
+  <div class="tel-haut"><h1 id="tel-titre">Maison</h1><button type="button" id="moi-changer">Changer</button></div>
 
   <!-- Heure -->
-  <section class="card span2 clock">
+  <section class="card span2 clock ecran-seul">
     <div class="label" id="greeting">Bonjour Baptiste</div>
     <div class="time" id="time">--:--</div>
     <div class="date" id="date"></div>
   </section>
 
   <!-- Météo -->
-  <section class="card span2 weather">
+  <section class="card span2 weather ecran-seul">
     <div class="main">
       <div class="label">Météo · Mettet</div>
       <div class="now">
@@ -212,7 +242,7 @@
   </section>
 
   <!-- Agenda -->
-  <section class="card span2 rows2">
+  <section class="card span2 rows2 ecran-seul">
     <div class="head">
       <div class="label">Agenda · aujourd'hui</div>
       <div class="legend">
@@ -226,7 +256,7 @@
   </section>
 
   <!-- Courses -->
-  <section class="card rows2" style="padding: 22px 20px;">
+  <section class="card rows2 courses" style="padding: 22px 20px;">
     <div class="label" id="c-title">Courses</div>
     <div class="list" id="c-list"></div>
     <form class="add" id="c-form">
@@ -239,7 +269,7 @@
   </section>
 
   <!-- Spotify -->
-  <section class="card" style="padding: 20px;">
+  <section class="card ecran-seul" style="padding: 20px;">
     <div class="head"><div class="label">En lecture</div><div class="sp-dev" id="s-dev"></div></div>
     <div class="sp-track">
       <div class="sp-art" id="s-art">
@@ -265,13 +295,15 @@
     </div>
   </section>
 
-  <!-- Lampe (phase 2) -->
+  <!-- Petit mot : envoyer un message (affiché sur l'écran + notification à la famille) -->
   <section class="card" style="padding: 20px;">
-    <div class="head"><div class="label">Lampe</div><div class="badge">PHASE 2</div></div>
-    <div class="soon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path></svg>
-      <div>Plus tard</div>
-    </div>
+    <div class="label">Petit mot</div>
+    <form class="msg-form" id="m-form">
+      <label for="m-input" class="visually-hidden">Message</label>
+      <textarea id="m-input" maxlength="140" placeholder="Écrire un message…"></textarea>
+      <button type="submit">Envoyer</button>
+      <div class="msg-etat" id="m-etat"></div>
+    </form>
   </section>
 
 </div>
@@ -295,6 +327,20 @@
   </div>
 </div>
 
+<!-- Téléphone : qui utilise cet appareil (pour signer les ajouts et les messages) -->
+<div class="overlay" id="moi-box">
+  <form onsubmit="return false">
+    <h2>Qui es-tu ?</h2>
+    <p>Pour signer tes ajouts et tes messages. Tu ne recevras pas tes propres notifications.</p>
+    <div class="moi-choix">
+      <button type="button" data-moi="baptiste">Baptiste</button>
+      <button type="button" data-moi="laurence">Laurence</button>
+      <button type="button" data-moi="pierre-yves">Pierre-Yves</button>
+      <button type="button" data-moi="mathieu">Mathieu</button>
+    </div>
+  </form>
+</div>
+
 <!-- Clé demandée une seule fois par appareil -->
 <div class="overlay" id="k-box">
   <form id="k-form">
@@ -316,6 +362,31 @@
   var METEO_REFRESH_MIN = 15;
 
   function $(id) { return document.getElementById(id); }
+
+  /* ---------- Téléphone ou écran mural ? ---------- */
+  var TEL = Math.min(screen.width, screen.height) < 600;
+  var NOMS = { 'baptiste': 'Baptiste', 'laurence': 'Laurence', 'pierre-yves': 'Pierre-Yves', 'mathieu': 'Mathieu' };
+  var MOI_KEY = 'ecran-mural-moi', moi = '';
+  try { moi = localStorage.getItem(MOI_KEY) || ''; } catch (e) {}
+  function majMoi() { $('tel-titre').textContent = moi && NOMS[moi] ? 'Bonjour ' + NOMS[moi] : 'Maison'; }
+  if (TEL) {
+    document.documentElement.style.overflow = 'auto';
+    document.documentElement.style.height = 'auto';
+    var btns = document.querySelectorAll('[data-moi]');
+    for (var bi = 0; bi < btns.length; bi++) {
+      btns[bi].addEventListener('click', function () {
+        moi = this.getAttribute('data-moi');
+        try { localStorage.setItem(MOI_KEY, moi); } catch (e) {}
+        $('moi-box').className = 'overlay';
+        majMoi();
+      });
+    }
+    $('moi-changer').addEventListener('click', function () { $('moi-box').className = 'overlay show'; });
+    if (!moi) $('moi-box').className = 'overlay show';
+    majMoi();
+  }
+  // Qui signe : le téléphone envoie son prénom ; l'écran mural ajoute au nom de Laurence
+  function signature() { return TEL ? (moi ? '&de=' + encodeURIComponent(moi) : '') : '&de=laurence&ecran=1'; }
 
   /* ---------- Heure ---------- */
   function updateClock() {
@@ -413,6 +484,24 @@
     loadAgenda(); loadSpotify();
   });
   if (!cle) askKey();
+
+  /* ---------- Envoyer un petit mot (écran mural ou téléphone) ---------- */
+  $('m-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var v = $('m-input').value.trim();
+    if (!v) return;
+    $('m-etat').textContent = 'Envoi…';
+    fetch(RELAIS + '/mot?t=' + encodeURIComponent(v) + signature() + '&k=' + encodeURIComponent(cle) + '&n=' + Date.now())
+      .then(function (r) {
+        if (r.status === 401) { askKey(); throw new Error('cle'); }
+        if (!r.ok) throw new Error('erreur');
+        $('m-input').value = ''; $('m-input').blur();
+        $('m-etat').textContent = 'Envoyé ✓';
+        setTimeout(function () { $('m-etat').textContent = ''; }, 4000);
+        loadSpotify();
+      })
+      .catch(function () { $('m-etat').textContent = "Échec de l'envoi, réessaie."; });
+  });
 
   /* ---------- Agenda (via le relais Cloudflare) ---------- */
   var COLORS = { henallux: 'var(--henallux)', famille: 'var(--famille)' };
@@ -531,8 +620,9 @@
     var siriAt = modeAt ? modeAt - serverOffset : 0; // heure de l'ordre Siri, en heure de l'iPad
     var effective = (siriAt && siriAt > lastSwitch(now)) ? mode : autoMode(now);
     if (effective !== lastEffective) { lastEffective = effective; peekUntil = 0; }
-    document.body.className = effective === 'jour' ? 'clair' : '';
-    var showNight = effective === 'nuit' && Date.now() > peekUntil;
+    document.body.className = (effective === 'jour' ? 'clair' : '') + (TEL ? ' tel' : '');
+    document.documentElement.style.background = effective === 'jour' ? '#ECEEF1' : '#0E1013';
+    var showNight = !TEL && effective === 'nuit' && Date.now() > peekUntil;
     $('night').className = showNight ? 'night show' : 'night';
   }
   $('night').addEventListener('click', function () {
@@ -579,6 +669,7 @@
   var mot = null, minuteur = null, serverOffset = 0;
 
   function renderMot() {
+    if (TEL) return; // sur le téléphone, pas de bandeau ni de lecture à voix haute
     $('mot').className = mot && mot.text ? 'mot show' : 'mot';
     $('mot-t').textContent = mot && mot.text ? mot.text : '';
     $('mot-de').textContent = mot && mot.text ? (mot.de ? 'Message de ' + mot.de : 'Message') : '';
@@ -621,7 +712,7 @@
   function two(n) { return (n < 10 ? '0' : '') + n; }
   function renderTimer() {
     var box = $('timer');
-    if (!minuteur) { box.className = 'timer'; return; }
+    if (!minuteur || TEL) { box.className = 'timer'; return; }
     var left = minuteur.end - (Date.now() + serverOffset);
     if (left > 0) {
       var s = Math.ceil(left / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
@@ -710,7 +801,7 @@
     input.value = '';
     input.blur();
     render();
-    coursesCall('/courses/add?t=' + encodeURIComponent(v));
+    coursesCall('/courses/add?t=' + encodeURIComponent(v) + signature());
   });
 
   render();
