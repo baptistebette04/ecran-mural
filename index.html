@@ -898,6 +898,22 @@
   render();
   applyMode(); // thème correct dès l'ouverture, sans attendre le relais
 
+  /* ---------- Mise à jour automatique : toutes les 5 min, on regarde si une nouvelle version est en ligne ---------- */
+  var VERSION = '2026-11-20a';
+  function verifierVersion() {
+    var a = document.activeElement;
+    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return; // on ne coupe pas quelqu'un qui écrit
+    fetch(location.pathname + '?maj=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.text() : ''; })
+      .then(function (t) {
+        var m = t.match(/var VERSION = '([^']+)'/);
+        if (m && m[1] !== VERSION) location.replace(location.pathname + '?v=' + encodeURIComponent(m[1]));
+      })
+      .catch(function () {});
+  }
+  setInterval(verifierVersion, 5 * 60 * 1000);
+  setTimeout(verifierVersion, 20 * 1000);
+
   /* ---------- Rechargement complet chaque nuit à 4h (évite que la page "fige") ---------- */
   setInterval(function () {
     var n = new Date();
