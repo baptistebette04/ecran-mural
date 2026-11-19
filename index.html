@@ -336,7 +336,7 @@
       <button type="button" data-moi="baptiste">Baptiste</button>
       <button type="button" data-moi="laurence">Laurence</button>
       <button type="button" data-moi="pierre-yves">Pierre-Yves</button>
-      <button type="button" data-moi="mathieu">Mathieu</button>
+      <button type="button" data-moi="matthieu">Matthieu</button>
     </div>
   </form>
 </div>
@@ -365,7 +365,7 @@
 
   /* ---------- Téléphone ou écran mural ? ---------- */
   var TEL = Math.min(screen.width, screen.height) < 600;
-  var NOMS = { 'baptiste': 'Baptiste', 'laurence': 'Laurence', 'pierre-yves': 'Pierre-Yves', 'mathieu': 'Mathieu' };
+  var NOMS = { 'baptiste': 'Baptiste', 'laurence': 'Laurence', 'pierre-yves': 'Pierre-Yves', 'matthieu': 'Matthieu' };
   var MOI_KEY = 'ecran-mural-moi', moi = '';
   try { moi = localStorage.getItem(MOI_KEY) || ''; } catch (e) {}
   function majMoi() { $('tel-titre').textContent = moi && NOMS[moi] ? 'Bonjour ' + NOMS[moi] : 'Maison'; }
