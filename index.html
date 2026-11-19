@@ -372,6 +372,19 @@
 
   function $(id) { return document.getElementById(id); }
 
+  /* ---------- Lien venant d'une notification : #k=…&moi=… → on retient la clé et le prénom ---------- */
+  (function () {
+    var h = location.hash.replace(/^#/, '');
+    if (h.indexOf('k=') < 0) return;
+    var p = {};
+    h.split('&').forEach(function (x) { var i = x.indexOf('='); if (i > 0) p[x.slice(0, i)] = decodeURIComponent(x.slice(i + 1)); });
+    try {
+      if (p.k) localStorage.setItem('ecran-mural-cle', p.k);
+      if (p.moi) localStorage.setItem('ecran-mural-moi', p.moi);
+    } catch (e) {}
+    if (history.replaceState) history.replaceState(null, '', location.pathname + location.search); // efface la clé de l'adresse
+  })();
+
   /* ---------- Téléphone ou écran mural ? ---------- */
   var TEL = Math.min(screen.width, screen.height) < 600;
   var NOMS = { 'baptiste': 'Baptiste', 'laurence': 'Laurence', 'pierre-yves': 'Pierre-Yves', 'matthieu': 'Matthieu' };
