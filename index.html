@@ -119,8 +119,13 @@
   }
   .add button svg { width: 20px; height: 20px; }
   /* Agenda */
-  .legend { display: flex; font-size: 13px; font-weight: 600; color: var(--muted); }
-  .legend span { display: flex; align-items: center; margin-left: 14px; }
+  .legend { display: flex; }
+  .legend button {
+    display: flex; align-items: center; height: 30px; padding: 0 12px; margin-left: 6px;
+    border: 0; border-radius: 999px; background: transparent; color: var(--muted);
+    font-size: 13px; font-weight: 700; font-family: inherit;
+  }
+  .legend button.on { background: var(--inner); color: var(--text); }
   .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
   .agenda { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; margin-top: 16px; }
   .ev { display: flex; align-items: center; background: var(--inner); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; }
@@ -253,10 +258,7 @@
   <section class="card span2 rows2 ecran-seul">
     <div class="head">
       <div class="label">Agenda · aujourd'hui</div>
-      <div class="legend">
-        <span><i style="background: var(--henallux)"></i>Henallux</span>
-        <span><i style="background: var(--famille)"></i>Famille</span>
-      </div>
+      <div class="legend" id="a-filtre" aria-label="Calendriers affichés"></div>
     </div>
     <div class="agenda" id="a-list">
       <div class="empty">Chargement…</div>
@@ -557,6 +559,37 @@
   /* ---------- Agenda (via le relais Cloudflare) ---------- */
   var COLORS = { henallux: 'var(--henallux)', famille: 'var(--famille)' };
   var NAMES = { henallux: 'Henallux', famille: 'Famille' };
+
+  // Filtre des calendriers : « Tout » ou un seul calendrier (choix retenu sur l'appareil)
+  var FILTRE_KEY = 'ecran-mural-filtre', filtre = 'tout';
+  try { filtre = localStorage.getItem(FILTRE_KEY) || 'tout'; } catch (e) {}
+  if (filtre !== 'tout' && !NAMES[filtre]) filtre = 'tout';
+  function visible(e) { return filtre === 'tout' || e.cal === filtre; }
+  function majFiltre() {
+    var box = $('a-filtre');
+    box.innerHTML = '';
+    var choix = [['tout', 'Tout']];
+    for (var id in NAMES) choix.push([id, NAMES[id]]);
+    choix.forEach(function (c) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = filtre === c[0] ? 'on' : '';
+      b.setAttribute('aria-pressed', filtre === c[0] ? 'true' : 'false');
+      if (c[0] !== 'tout') {
+        var dot = document.createElement('i');
+        dot.style.background = COLORS[c[0]] || 'var(--muted)';
+        b.appendChild(dot);
+      }
+      b.appendChild(document.createTextNode(c[1]));
+      b.addEventListener('click', function () {
+        filtre = c[0];
+        try { localStorage.setItem(FILTRE_KEY, filtre); } catch (e) {}
+        majFiltre(); renderAgenda();
+      });
+      box.appendChild(b);
+    });
+  }
+  majFiltre();
   var agenda = null;
 
   function toMin(s) { return s ? (+s.slice(0, 2)) * 60 + (+s.slice(3, 5)) : null; }
@@ -589,22 +622,23 @@
       box.innerHTML = '<div class="empty">Agenda indisponible pour le moment</div>';
       return;
     }
-    if (!agenda.today.length) {
+    var jour = agenda.today.filter(visible), demain = agenda.tomorrow.filter(visible);
+    if (!jour.length) {
       box.innerHTML = '<div class="empty">Rien de prévu aujourd\'hui</div>';
     } else {
-      agenda.today.forEach(function (e) { box.appendChild(evRow(e, true, nowMin)); });
+      jour.forEach(function (e) { box.appendChild(evRow(e, true, nowMin)); });
     }
     var d = document.createElement('div');
     d.className = 'day';
     d.textContent = 'Demain';
     box.appendChild(d);
-    if (!agenda.tomorrow.length) {
+    if (!demain.length) {
       var em = document.createElement('div');
       em.className = 'empty';
       em.textContent = 'Rien de prévu';
       box.appendChild(em);
     } else {
-      agenda.tomorrow.forEach(function (e) { box.appendChild(evRow(e, false, nowMin)); });
+      demain.forEach(function (e) { box.appendChild(evRow(e, false, nowMin)); });
     }
   }
 
