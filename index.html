@@ -834,7 +834,7 @@
     var siriAt = modeAt ? modeAt - serverOffset : 0; // heure de l'ordre Siri, en heure de l'iPad
     var effective = (siriAt && siriAt > lastSwitch(now)) ? mode : autoMode(now);
     if (effective !== lastEffective) { lastEffective = effective; peekUntil = 0; }
-    document.body.className = (effective === 'jour' ? 'clair' : '') + (TEL ? ' tel' : '');
+    document.body.className = (effective === 'jour' ? 'clair' : '') + (TEL ? ' tel' : '') + (grand ? ' agrandi' : '');
     document.documentElement.style.background = effective === 'jour' ? '#ECEEF1' : '#0E1013';
     var showNight = !TEL && effective === 'nuit' && Date.now() > peekUntil;
     $('night').className = showNight ? 'night show' : 'night';
@@ -1027,7 +1027,7 @@
   render();
   applyMode(); // thème correct dès l'ouverture, sans attendre le relais
 
-  /* ---------- Bloc agrandi : toucher un bloc l'agrandit, « Réduire » (ou 3 min sans toucher) le remet ---------- */
+  /* ---------- Bloc agrandi : toucher un bloc l'agrandit, « Réduire » le remet ---------- */
   var grand = '', grandTimer = null;
   function estGrand(nom) { return grand === nom; }
   function agrandir(nom) {
@@ -1046,8 +1046,8 @@
     relancerMinuteur();
   }
   function relancerMinuteur() {
-    if (grandTimer) clearTimeout(grandTimer);
-    if (grand) grandTimer = setTimeout(function () { agrandir(''); }, 3 * 60 * 1000);
+    // Pas de retour automatique : le bloc reste agrandi jusqu'au bouton « Réduire »
+    if (grandTimer) { clearTimeout(grandTimer); grandTimer = null; }
   }
   function surToucherBloc(card, ev) {
     var t = ev.target;
@@ -1144,7 +1144,7 @@
   });
 
   /* ---------- Mise à jour automatique : toutes les 5 min, on regarde si une nouvelle version est en ligne ---------- */
-  var VERSION = '2026-11-23b';
+  var VERSION = '2026-11-23c';
   function verifierVersion() {
     var a = document.activeElement;
     if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return; // on ne coupe pas quelqu'un qui écrit
