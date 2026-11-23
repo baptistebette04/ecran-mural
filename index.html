@@ -156,6 +156,24 @@
   .sp-ctrl button.main { width: 56px; height: 56px; background: var(--text); color: var(--card); }
   .sp-ctrl button:disabled { opacity: .35; }
 
+  /* ---------- Bloc Heure : qui est à la maison + comptes à rebours ---------- */
+  .clock { position: relative; }
+  .clock .time { font-size: 84px; }
+  .cote { position: absolute; top: 20px; right: 22px; bottom: 18px; width: 190px; display: flex; flex-direction: column; justify-content: space-between; }
+  .cote-t { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+  .pres { display: flex; flex-wrap: wrap; }
+  .pres span { display: flex; align-items: center; height: 24px; padding: 0 8px 0 7px; margin: 0 5px 5px 0; border-radius: 999px; background: var(--inner); font-size: 12px; font-weight: 700; color: var(--muted); }
+  .pres span i { width: 8px; height: 8px; border-radius: 50%; background: #B8BDC4; margin-right: 6px; }
+  .pres span.ici { color: var(--text); }
+  .pres span.ici i { background: #2BA84A; }
+  .reb div { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .reb b { color: var(--accent); font-weight: 800; }
+  body.tel .cote, body.agrandi .clock:not(.grand) .cote { display: none; }
+  body.agrandi .clock.grand .cote { position: static; width: 420px; margin-top: 36px; text-align: left; }
+  body.agrandi .clock.grand .reb { margin-top: 18px; }
+  body.agrandi .clock.grand .pres span { height: 32px; font-size: 15px; padding: 0 12px 0 10px; }
+  body.agrandi .clock.grand .reb div { font-size: 17px; margin-top: 6px; }
+
   /* ---------- Bloc agrandi (toucher un bloc = il prend presque tout l'écran) ---------- */
   .card[data-bloc] { cursor: pointer; } /* sans ça, Safari sur iPad n'envoie pas les touchers des zones « non cliquables » */
   .mini { display: none; }
@@ -311,6 +329,10 @@
     <div class="label" id="greeting">Bonjour Baptiste</div>
     <div class="time" id="time">--:--</div>
     <div class="date" id="date"></div>
+    <div class="cote">
+      <div><div class="cote-t">À la maison</div><div class="pres" id="pres"></div></div>
+      <div class="reb" id="reb"></div>
+    </div>
   </section>
 
   <!-- Météo -->
@@ -715,7 +737,9 @@
     row.querySelector('.dot').style.background = COLORS[e.cal] || 'var(--muted)';
     row.querySelector('.when').textContent = e.allDay ? 'Journée' : (e.end ? e.start + '–' + e.end : e.start);
     row.querySelector('.title').textContent = e.title;
-    row.querySelector('.sub').textContent = e.location ? e.location : (NAMES[e.cal] || '');
+    var sous = e.location ? e.location : (NAMES[e.cal] || '');
+    if (e.trajet) sous = (e.location ? e.location + ' · ' : '') + e.trajet + ' min de route';
+    row.querySelector('.sub').textContent = sous;
     return row;
   }
 
@@ -854,6 +878,7 @@
       applyMode();
       if (d.courses) setCoursesFromServer(d.courses);
       minuteur = d.minuteur || null; mot = d.mot || null;
+      if (d.presence) renderPresence(d.presence);
       renderMot(); renderTimer();
       if (d.spotify) { sp = d.spotify; spAt = Date.now(); renderSpotify(); }
     }).catch(function () {});
@@ -1027,6 +1052,44 @@
   render();
   applyMode(); // thème correct dès l'ouverture, sans attendre le relais
 
+  /* ---------- Qui est à la maison + comptes à rebours (bloc Heure) ---------- */
+  function renderPresence(p) {
+    var box = $('pres');
+    box.innerHTML = '';
+    for (var k in NOMS) {
+      var s = document.createElement('span');
+      var ici = p[k] && p[k].etat === 'maison';
+      s.className = ici ? 'ici' : '';
+      s.innerHTML = '<i></i>';
+      s.appendChild(document.createTextNode(NOMS[k]));
+      box.appendChild(s);
+    }
+  }
+  renderPresence({});
+  function loadRebours() {
+    if (!cle) return;
+    relais('/rebours').then(function (d) {
+      var box = $('reb');
+      box.innerHTML = '';
+      var l = (d && d.rebours) || [];
+      if (!l.length) return;
+      var t = document.createElement('div');
+      t.className = 'cote-t';
+      t.textContent = 'Bientôt';
+      box.appendChild(t);
+      l.slice(0, grand === 'heure' ? 6 : 2).forEach(function (r) {
+        var row = document.createElement('div');
+        var b = document.createElement('b');
+        b.textContent = r.jours === 1 ? 'demain' : 'J-' + r.jours;
+        row.appendChild(b);
+        row.appendChild(document.createTextNode(' · ' + r.title));
+        box.appendChild(row);
+      });
+    }).catch(function () {});
+  }
+  loadRebours();
+  setInterval(loadRebours, 30 * 60 * 1000);
+
   /* ---------- Bloc agrandi : toucher un bloc l'agrandit, « Réduire » le remet ---------- */
   var grand = '', grandTimer = null;
   function estGrand(nom) { return grand === nom; }
@@ -1041,6 +1104,7 @@
     b.className = b.className.replace(/\s*\bagrandi\b/g, '') + (nom ? ' agrandi' : '');
     $('a-titre').textContent = nom === 'agenda' ? 'Agenda · 7 jours' : 'Agenda';
     renderAgenda();
+    loadRebours();
     if (nom === 'spotify' && !spListes) chargerPlaylists();
     majMini();
     relancerMinuteur();
@@ -1144,7 +1208,7 @@
   });
 
   /* ---------- Mise à jour automatique : toutes les 5 min, on regarde si une nouvelle version est en ligne ---------- */
-  var VERSION = '2026-11-23c';
+  var VERSION = '2026-11-23d';
   function verifierVersion() {
     var a = document.activeElement;
     if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return; // on ne coupe pas quelqu'un qui écrit
