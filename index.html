@@ -5,8 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Écran mural">
+<meta name="apple-mobile-web-app-title" content="Écran mural" id="app-titre">
 <title>Écran mural</title>
+<link rel="apple-touch-icon" href="icone-principal.png" id="app-icone">
+<script>
+// Écran chambre : son icône et son nom à lui sur l'écran d'accueil
+(function () { try {
+  var c = /[?&#]piece=chambre/.test(location.search + location.hash) || localStorage.getItem('ecran-mural-piece') === 'chambre';
+  if (c) { document.getElementById('app-icone').href = 'icone-chambre.png'; document.getElementById('app-titre').content = 'Chambre'; document.title = 'Chambre'; }
+} catch (e) {} })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -1241,7 +1249,7 @@
   });
 
   /* ---------- Mise à jour automatique : toutes les 5 min, on regarde si une nouvelle version est en ligne ---------- */
-  var VERSION = '2026-11-23e';
+  var VERSION = '2026-11-23f';
   function verifierVersion() {
     var a = document.activeElement;
     if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return; // on ne coupe pas quelqu'un qui écrit
