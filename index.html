@@ -156,6 +156,75 @@
   .sp-ctrl button.main { width: 56px; height: 56px; background: var(--text); color: var(--card); }
   .sp-ctrl button:disabled { opacity: .35; }
 
+  /* ---------- Bloc agrandi (toucher un bloc = il prend presque tout l'écran) ---------- */
+  .mini { display: none; }
+  .reduire { display: none; }
+  .semaine, .sp-plus { display: none; }
+  body.agrandi .grid { grid-template-columns: minmax(0, 1fr) 250px; grid-template-rows: repeat(5, minmax(0, 1fr)); }
+  body.agrandi .card { grid-column: 2; grid-row: auto; padding: 12px 16px; justify-content: center; flex-direction: column; }
+  body.agrandi .card.grand { grid-column: 1; grid-row: 1 / span 5; padding: 26px 30px; justify-content: flex-start; position: relative; }
+  body.agrandi .card:not(.grand) > * { display: none; }
+  body.agrandi .card:not(.grand) > .mini { display: block; }
+  .mini-l { display: block; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .mini-v { display: block; font-size: 19px; font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.agrandi .card.grand > .reduire {
+    display: flex; align-items: center; position: absolute; top: 18px; right: 20px; z-index: 2;
+    height: 36px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--inner); color: var(--muted);
+    font-size: 14px; font-weight: 700; font-family: inherit;
+  }
+  /* Heure agrandie */
+  body.agrandi .clock.grand { justify-content: center; align-items: center; text-align: center; }
+  body.agrandi .clock.grand .time { font-size: 210px; letter-spacing: -8px; }
+  body.agrandi .clock.grand .date { font-size: 30px; margin-top: 10px; }
+  /* Météo agrandie : prévisions sur 7 jours */
+  body.agrandi .weather.grand { flex-direction: column; }
+  body.agrandi .weather.grand .main { flex: none; }
+  body.agrandi .weather.grand .hours { display: none; }
+  body.agrandi .weather.grand .semaine { display: block; margin-top: 22px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .wj { display: flex; align-items: center; background: var(--inner); border-radius: 16px; padding: 12px 18px; margin-bottom: 10px; }
+  .wj-j { width: 150px; font-size: 18px; font-weight: 700; text-transform: capitalize; }
+  .wj-i { width: 40px; height: 32px; color: var(--accent); }
+  .wj-i svg { width: 32px; height: 32px; }
+  .wj-d { flex: 1; font-size: 16px; font-weight: 500; color: var(--muted); padding-left: 12px; }
+  .wj-p { width: 110px; font-size: 15px; font-weight: 600; color: var(--henallux); }
+  .wj-t { width: 110px; text-align: right; font-size: 19px; font-weight: 700; }
+  /* Agenda agrandi : la semaine */
+  body.agrandi .card.grand .head { padding-right: 120px; }
+  body.agrandi .agenda-card.grand .ev .title { font-size: 19px; }
+  .day.semaine-j { font-size: 17px; color: var(--text); margin: 18px 0 10px; }
+  .day.semaine-j:first-child { margin-top: 4px; }
+  /* Courses et petit mot agrandis */
+  body.agrandi .courses.grand .label, body.agrandi .msg-card.grand .label { font-size: 18px; }
+  body.agrandi .courses.grand .list { -webkit-column-count: 2; column-count: 2; -webkit-column-gap: 24px; column-gap: 24px; }
+  body.agrandi .courses.grand .item { font-size: 23px; min-height: 56px; -webkit-column-break-inside: avoid; break-inside: avoid; }
+  body.agrandi .courses.grand .add input { height: 56px; font-size: 20px; }
+  body.agrandi .courses.grand .add button { width: 56px; height: 56px; }
+  body.agrandi .msg-card.grand .dest button { height: 40px; padding: 0 18px; font-size: 17px; }
+  body.agrandi .msg-card.grand .msg-form textarea { font-size: 26px; padding: 16px 20px; }
+  body.agrandi .msg-card.grand .msg-form button { height: 58px; font-size: 20px; }
+  /* Spotify agrandi : playlists et recherche */
+  body.agrandi .spotify-card.grand .sp-art { width: 96px; height: 96px; }
+  body.agrandi .spotify-card.grand .sp-title { font-size: 22px; }
+  body.agrandi .spotify-card.grand .sp-artist { font-size: 16px; }
+  body.agrandi .spotify-card.grand .sp-ctrl { margin-top: 14px; justify-content: center; }
+  body.agrandi .spotify-card.grand .sp-ctrl button { margin: 0 18px; }
+  body.agrandi .spotify-card.grand .sp-plus { display: flex; flex-direction: column; flex: 1; min-height: 0; margin-top: 18px; }
+  .sp-cherche { display: flex; }
+  .sp-cherche input {
+    flex: 1; min-width: 0; height: 48px; border-radius: 14px; border: 0; background: var(--inner); color: var(--text);
+    padding: 0 16px; font-size: 17px; font-family: inherit; -webkit-user-select: text; user-select: text; -webkit-appearance: none;
+  }
+  .sp-cherche button { height: 48px; margin-left: 8px; padding: 0 18px; border: 0; border-radius: 14px; background: var(--accent); color: var(--on-accent); font-size: 16px; font-weight: 700; font-family: inherit; }
+  .sp-titre { font-size: 15px; font-weight: 600; color: var(--muted); margin: 16px 0 8px; display: flex; justify-content: space-between; align-items: center; }
+  .sp-titre button { border: 0; background: transparent; color: var(--muted); font-size: 14px; font-weight: 700; font-family: inherit; padding: 4px 0; }
+  .sp-liste { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; display: grid; grid-template-columns: 1fr 1fr; grid-gap: 10px; align-content: start; }
+  .sp-el { display: flex; align-items: center; text-align: left; width: 100%; border: 0; border-radius: 14px; background: var(--inner); color: var(--text); padding: 8px; font-family: inherit; }
+  .sp-el-img { width: 52px; height: 52px; border-radius: 10px; flex-shrink: 0; margin-right: 12px; background: var(--card) center/cover no-repeat; }
+  .sp-el-txt { min-width: 0; }
+  .sp-el-n { display: block; font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sp-el-s { display: block; font-size: 13px; font-weight: 500; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .sp-info { font-size: 15px; font-weight: 600; color: var(--muted); padding: 8px 2px; grid-column: 1 / -1; }
+
   /* Mode nuit */
   .night { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 5; }
   .night.show { display: flex; }
@@ -235,14 +304,18 @@
   <div class="tel-haut"><h1 id="tel-titre">Maison</h1><button type="button" id="moi-changer">Changer</button></div>
 
   <!-- Heure -->
-  <section class="card span2 clock ecran-seul">
+  <section class="card span2 clock ecran-seul" data-bloc="heure">
+    <div class="mini"><span class="mini-l">Heure</span><span class="mini-v" id="mini-heure"></span></div>
+    <button type="button" class="reduire">Réduire ✕</button>
     <div class="label" id="greeting">Bonjour Baptiste</div>
     <div class="time" id="time">--:--</div>
     <div class="date" id="date"></div>
   </section>
 
   <!-- Météo -->
-  <section class="card span2 weather ecran-seul">
+  <section class="card span2 weather ecran-seul" data-bloc="meteo">
+    <div class="mini"><span class="mini-l">Météo</span><span class="mini-v" id="mini-meteo"></span></div>
+    <button type="button" class="reduire">Réduire ✕</button>
     <div class="main">
       <div class="label">Météo · Mettet</div>
       <div class="now">
@@ -252,12 +325,15 @@
       <div class="desc" id="w-desc">Chargement…</div>
     </div>
     <div class="hours" id="w-hours"></div>
+    <div class="semaine" id="w-semaine"></div>
   </section>
 
   <!-- Agenda -->
-  <section class="card span2 rows2 ecran-seul">
+  <section class="card span2 rows2 ecran-seul agenda-card" data-bloc="agenda">
+    <div class="mini"><span class="mini-l">Agenda</span><span class="mini-v" id="mini-agenda"></span></div>
+    <button type="button" class="reduire">Réduire ✕</button>
     <div class="head">
-      <div class="label">Agenda</div>
+      <div class="label" id="a-titre">Agenda</div>
       <div class="legend" id="a-filtre" aria-label="Calendriers affichés"></div>
     </div>
     <div class="agenda" id="a-list">
@@ -266,7 +342,9 @@
   </section>
 
   <!-- Courses -->
-  <section class="card rows2 courses" style="padding: 22px 20px;">
+  <section class="card rows2 courses" style="padding: 22px 20px;" data-bloc="courses">
+    <div class="mini"><span class="mini-l">Courses</span><span class="mini-v" id="mini-courses"></span></div>
+    <button type="button" class="reduire">Réduire ✕</button>
     <div class="label" id="c-title">Courses</div>
     <div class="list" id="c-list"></div>
     <form class="add" id="c-form">
@@ -279,7 +357,9 @@
   </section>
 
   <!-- Spotify -->
-  <section class="card ecran-seul" style="padding: 20px;">
+  <section class="card ecran-seul spotify-card" style="padding: 20px;" data-bloc="spotify">
+    <div class="mini"><span class="mini-l">Musique</span><span class="mini-v" id="mini-spotify"></span></div>
+    <button type="button" class="reduire">Réduire ✕</button>
     <div class="head"><div class="label">En lecture</div><div class="sp-dev" id="s-dev"></div></div>
     <div class="sp-track">
       <div class="sp-art" id="s-art">
@@ -303,10 +383,21 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 4 10 8-10 8V4Z"></path><path d="M19 5v14"></path></svg>
       </button>
     </div>
+    <div class="sp-plus">
+      <form class="sp-cherche" id="sp-form">
+        <label for="sp-q" class="visually-hidden">Rechercher sur Spotify</label>
+        <input id="sp-q" type="search" placeholder="Rechercher un titre, un artiste, un album…" autocomplete="off">
+        <button type="submit">Chercher</button>
+      </form>
+      <div class="sp-titre"><span id="sp-titre">Tes playlists</span><button type="button" id="sp-retour" style="display:none">← Playlists</button></div>
+      <div class="sp-liste" id="sp-liste"></div>
+    </div>
   </section>
 
   <!-- Petit mot : envoyer un message (affiché sur l'écran + notification à la famille) -->
-  <section class="card" style="padding: 20px;">
+  <section class="card msg-card" style="padding: 20px;" data-bloc="mot">
+    <div class="mini"><span class="mini-l">Petit mot</span><span class="mini-v" id="mini-mot"></span></div>
+    <button type="button" class="reduire">Réduire ✕</button>
     <div class="label">Petit mot</div>
     <div class="dest" id="m-dest" aria-label="Destinataires"></div>
     <form class="msg-form" id="m-form">
@@ -438,7 +529,7 @@
   }
   majDest();
   // Qui signe : le téléphone envoie son prénom ; l'écran mural ajoute au nom de Laurence
-  function signature() { return TEL ? (moi ? '&de=' + encodeURIComponent(moi) : '') : '&de=laurence&ecran=1'; }
+  function signature() { return TEL ? (moi ? '&de=' + encodeURIComponent(moi) : '') : '&de=ecran&ecran=1'; }
 
   /* ---------- Heure ---------- */
   function updateClock() {
@@ -483,8 +574,8 @@
     var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + LAT + '&longitude=' + LON +
       '&current=temperature_2m,weather_code' +
       '&hourly=temperature_2m' +
-      '&daily=temperature_2m_max,temperature_2m_min' +
-      '&timezone=Europe%2FBrussels&forecast_days=2';
+      '&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max' +
+      '&timezone=Europe%2FBrussels&forecast_days=7';
     fetch(url).then(function (r) { return r.json(); }).then(function (d) {
       var info = codeInfo(d.current.weather_code);
       $('w-icon').innerHTML = svg(info[1]);
@@ -502,6 +593,21 @@
         html += '<div class="hour"><div class="h">' + times[k].slice(11, 13) + 'h</div><div class="t">' + Math.round(temps[k]) + '°</div></div>';
       }
       $('w-hours').innerHTML = html;
+
+      // Semaine (affichée quand la météo est agrandie)
+      var JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+      var sem = '';
+      for (var j = 0; j < d.daily.time.length; j++) {
+        var p = d.daily.time[j].split('-');
+        var dt = new Date(+p[0], +p[1] - 1, +p[2]);
+        var nom = j === 0 ? "aujourd'hui" : (j === 1 ? 'demain' : JOURS[dt.getDay()] + ' ' + dt.getDate());
+        var inf = codeInfo(d.daily.weather_code[j]);
+        var pluie = d.daily.precipitation_probability_max ? d.daily.precipitation_probability_max[j] : null;
+        sem += '<div class="wj"><span class="wj-j">' + nom + '</span><span class="wj-i">' + svg(inf[1]) + '</span>' +
+          '<span class="wj-d">' + inf[0] + '</span><span class="wj-p">' + (pluie !== null && pluie !== undefined ? 'Pluie ' + pluie + ' %' : '') + '</span>' +
+          '<span class="wj-t">' + Math.round(d.daily.temperature_2m_min[j]) + '° / ' + Math.round(d.daily.temperature_2m_max[j]) + '°</span></div>';
+      }
+      $('w-semaine').innerHTML = sem;
     }).catch(function () {
       $('w-desc').textContent = 'Météo indisponible pour le moment';
     });
@@ -622,6 +728,28 @@
       box.innerHTML = '<div class="empty">Agenda indisponible pour le moment</div>';
       return;
     }
+    // Agenda agrandi : la semaine entière
+    if (estGrand('agenda') && agenda.jours) {
+      var NJ = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+      var NM = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+      agenda.jours.forEach(function (j, i) {
+        var dt = new Date(+j.date.slice(0, 4), +j.date.slice(4, 6) - 1, +j.date.slice(6, 8));
+        var h = document.createElement('div');
+        h.className = 'day semaine-j';
+        var lib = NJ[dt.getDay()] + ' ' + dt.getDate() + ' ' + NM[dt.getMonth()];
+        h.textContent = i === 0 ? "Aujourd'hui · " + lib : (i === 1 ? 'Demain · ' + lib : lib.charAt(0).toUpperCase() + lib.slice(1));
+        box.appendChild(h);
+        var evs = j.events.filter(visible);
+        if (!evs.length) {
+          var vide = document.createElement('div');
+          vide.className = 'empty';
+          vide.textContent = 'Rien de prévu';
+          box.appendChild(vide);
+        }
+        evs.forEach(function (e) { box.appendChild(evRow(e, i === 0, nowMin)); });
+      });
+      return;
+    }
     var jour = agenda.today.filter(visible), demain = agenda.tomorrow.filter(visible);
     if (!jour.length) {
       box.innerHTML = '<div class="empty">Rien de prévu aujourd\'hui</div>';
@@ -644,7 +772,7 @@
 
   function loadAgenda() {
     if (!cle) return;
-    relais('/').then(function (d) {
+    relais('/?jours=7').then(function (d) {
       agenda = d; renderAgenda();
     }).catch(function () {
       if (!agenda) { agenda = { error: true }; renderAgenda(); }
@@ -898,8 +1026,119 @@
   render();
   applyMode(); // thème correct dès l'ouverture, sans attendre le relais
 
+  /* ---------- Bloc agrandi : toucher un bloc l'agrandit, « Réduire » (ou 3 min sans toucher) le remet ---------- */
+  var grand = '', grandTimer = null;
+  function estGrand(nom) { return grand === nom; }
+  function agrandir(nom) {
+    grand = nom;
+    var cards = document.querySelectorAll('.card[data-bloc]');
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      c.className = c.className.replace(/\s*\bgrand\b/g, '') + (c.getAttribute('data-bloc') === nom ? ' grand' : '');
+    }
+    var b = document.body;
+    b.className = b.className.replace(/\s*\bagrandi\b/g, '') + (nom ? ' agrandi' : '');
+    $('a-titre').textContent = nom === 'agenda' ? 'Agenda · 7 jours' : 'Agenda';
+    renderAgenda();
+    if (nom === 'spotify' && !spListes) chargerPlaylists();
+    majMini();
+    relancerMinuteur();
+  }
+  function relancerMinuteur() {
+    if (grandTimer) clearTimeout(grandTimer);
+    if (grand) grandTimer = setTimeout(function () { agrandir(''); }, 3 * 60 * 1000);
+  }
+  if (!TEL) {
+    document.addEventListener('click', function (ev) {
+      var t = ev.target;
+      if (t.closest && t.closest('.reduire')) { agrandir(''); return; }
+      var card = t.closest ? t.closest('.card[data-bloc]') : null;
+      if (!card) return;
+      relancerMinuteur();
+      var nom = card.getAttribute('data-bloc');
+      if (nom === grand) return; // dans le bloc agrandi, on laisse les boutons faire leur travail
+      if (!grand && t.closest('button, input, textarea, a, label, form, .legend, .dest')) return;
+      agrandir(nom);
+    }, false);
+  }
+  // Résumés affichés dans la colonne de droite quand un bloc est agrandi
+  function majMini() {
+    if (!grand) return;
+    $('mini-heure').textContent = $('time').textContent;
+    $('mini-meteo').textContent = $('w-temp').textContent + ' ' + ($('w-desc').textContent.split(' · ')[0] || '');
+    var prochain = '';
+    if (agenda && agenda.today) {
+      var n = new Date(), nm = n.getHours() * 60 + n.getMinutes();
+      for (var i = 0; i < agenda.today.length; i++) {
+        var e = agenda.today[i];
+        if (e.allDay || toMin(e.end || e.start) > nm) { prochain = (e.allDay ? '' : e.start + ' ') + e.title; break; }
+      }
+    }
+    $('mini-agenda').textContent = prochain || "Rien d'autre aujourd'hui";
+    $('mini-courses').textContent = $('c-title').textContent.replace(/^Courses · /, '') || 'Liste vide';
+    $('mini-spotify').textContent = $('s-title').textContent;
+    $('mini-mot').textContent = 'Écrire un message';
+  }
+  setInterval(majMini, 3000);
+
+  /* ---------- Spotify agrandi : playlists, recherche, lancer ---------- */
+  var spListes = null;
+  function spMessage(txt) { $('sp-liste').innerHTML = '<div class="sp-info"></div>'; $('sp-liste').firstChild.textContent = txt; }
+  function spErreur(d) {
+    if (d && (d.erreur === 'autorisation' || /spotify/i.test(d.error || ''))) spMessage('Reconnecte Spotify depuis le Mac pour voir tes playlists et faire des recherches.');
+    else spMessage('Spotify ne répond pas pour le moment.');
+  }
+  function spAfficher(liste, titre, retour) {
+    $('sp-titre').textContent = titre;
+    $('sp-retour').style.display = retour ? 'block' : 'none';
+    var box = $('sp-liste');
+    box.innerHTML = '';
+    if (!liste.length) { spMessage('Aucun résultat.'); return; }
+    liste.forEach(function (x) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sp-el';
+      b.innerHTML = '<span class="sp-el-img"></span><span class="sp-el-txt"><span class="sp-el-n"></span><span class="sp-el-s"></span></span>';
+      if (x.image) b.querySelector('.sp-el-img').style.backgroundImage = 'url("' + x.image + '")';
+      b.querySelector('.sp-el-n').textContent = x.nom;
+      b.querySelector('.sp-el-s').textContent = x.sous || (x.nb ? x.nb + ' titres' : 'Playlist');
+      b.addEventListener('click', function () {
+        b.querySelector('.sp-el-s').textContent = 'Lancement…';
+        relais('/spotify/lancer?uri=' + encodeURIComponent(x.uri)).then(function (d) {
+          b.querySelector('.sp-el-s').textContent = d.ok ? 'En lecture' + (d.appareil ? ' sur ' + d.appareil : '') :
+            (d.erreur === 'appareil' ? 'Ouvre Spotify sur un appareil' : 'Spotify a refusé');
+          setTimeout(loadSpotify, 1000);
+        }).catch(function () { b.querySelector('.sp-el-s').textContent = 'Échec'; });
+      });
+      box.appendChild(b);
+    });
+  }
+  function chargerPlaylists() {
+    spMessage('Chargement de tes playlists…');
+    relais('/spotify/playlists').then(function (d) {
+      if (!d.playlists) { spErreur(d); return; }
+      spListes = d.playlists;
+      spAfficher(spListes, 'Tes playlists', false);
+    }).catch(function () { spErreur(null); });
+  }
+  $('sp-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var q = $('sp-q').value.trim();
+    if (!q) { if (spListes) spAfficher(spListes, 'Tes playlists', false); return; }
+    $('sp-q').blur();
+    spMessage('Recherche…');
+    relais('/spotify/recherche?q=' + encodeURIComponent(q)).then(function (d) {
+      if (!d.resultats) { spErreur(d); return; }
+      spAfficher(d.resultats, 'Résultats pour « ' + q + ' »', true);
+    }).catch(function () { spErreur(null); });
+  });
+  $('sp-retour').addEventListener('click', function () {
+    $('sp-q').value = '';
+    if (spListes) spAfficher(spListes, 'Tes playlists', false); else chargerPlaylists();
+  });
+
   /* ---------- Mise à jour automatique : toutes les 5 min, on regarde si une nouvelle version est en ligne ---------- */
-  var VERSION = '2026-11-20b';
+  var VERSION = '2026-11-23a';
   function verifierVersion() {
     var a = document.activeElement;
     if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return; // on ne coupe pas quelqu'un qui écrit
