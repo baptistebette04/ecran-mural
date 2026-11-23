@@ -157,6 +157,7 @@
   .sp-ctrl button:disabled { opacity: .35; }
 
   /* ---------- Bloc agrandi (toucher un bloc = il prend presque tout l'écran) ---------- */
+  .card[data-bloc] { cursor: pointer; } /* sans ça, Safari sur iPad n'envoie pas les touchers des zones « non cliquables » */
   .mini { display: none; }
   .reduire { display: none; }
   .semaine, .sp-plus { display: none; }
@@ -1048,18 +1049,23 @@
     if (grandTimer) clearTimeout(grandTimer);
     if (grand) grandTimer = setTimeout(function () { agrandir(''); }, 3 * 60 * 1000);
   }
+  function surToucherBloc(card, ev) {
+    var t = ev.target;
+    if (t.nodeType !== 1) t = t.parentNode;
+    if (t.closest('.reduire')) { agrandir(''); return; }
+    relancerMinuteur();
+    var nom = card.getAttribute('data-bloc');
+    if (nom === grand) return; // dans le bloc agrandi, on laisse les boutons faire leur travail
+    if (!grand && t.closest('button, input, textarea, a, label, form, .legend, .dest')) return;
+    agrandir(nom);
+  }
   if (!TEL) {
-    document.addEventListener('click', function (ev) {
-      var t = ev.target;
-      if (t.closest && t.closest('.reduire')) { agrandir(''); return; }
-      var card = t.closest ? t.closest('.card[data-bloc]') : null;
-      if (!card) return;
-      relancerMinuteur();
-      var nom = card.getAttribute('data-bloc');
-      if (nom === grand) return; // dans le bloc agrandi, on laisse les boutons faire leur travail
-      if (!grand && t.closest('button, input, textarea, a, label, form, .legend, .dest')) return;
-      agrandir(nom);
-    }, false);
+    var blocs = document.querySelectorAll('.card[data-bloc]');
+    for (var bk = 0; bk < blocs.length; bk++) {
+      (function (card) {
+        card.addEventListener('click', function (ev) { surToucherBloc(card, ev); }, false);
+      })(blocs[bk]);
+    }
   }
   // Résumés affichés dans la colonne de droite quand un bloc est agrandi
   function majMini() {
@@ -1138,7 +1144,7 @@
   });
 
   /* ---------- Mise à jour automatique : toutes les 5 min, on regarde si une nouvelle version est en ligne ---------- */
-  var VERSION = '2026-11-23a';
+  var VERSION = '2026-11-23b';
   function verifierVersion() {
     var a = document.activeElement;
     if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return; // on ne coupe pas quelqu'un qui écrit
